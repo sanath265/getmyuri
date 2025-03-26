@@ -1,0 +1,75 @@
+/* Login.css */
+
+.page {
+  /* Centers the form vertically and horizontally */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f2f2f2; /* Light gray background */
+}
+
+.form {
+  /* Container for the login form */
+  background-color: #ffffff;
+  padding: 2rem;
+  width: 320px; 
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  text-align: center; /* Centers text and form elements */
+}
+
+.form h1 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.form form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form input[type="email"],
+.form input[type="password"] {
+  /* Email & Password fields */
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc; 
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.btn {
+  /* Submit button */
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #E84855; /* Red button color */
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #E84855; /* Darker red on hover */
+}
+
+
+.forgot-password {
+    display: inline-block;
+    margin: 1rem 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: #666;
+    text-decoration: none;
+  }
+  
+  .forgot-password:hover {
+    text-decoration: underline;
+  }
+
+.message:hover {
+  text-decoration: underline;
+}

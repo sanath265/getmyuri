@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield Background -->
+  <path d="M200 50 L300 100 V200 C300 250 200 280 200 280 C200 280 100 250 100 200 V100 L200 50Z" fill="#F3F4F6"/>
+  <path d="M200 50 L300 100 V200 C300 250 200 280 200 280 C200 280 100 250 100 200 V100 L200 50Z" stroke="#E94444" stroke-width="2"/>
+  
+  <!-- Lock -->
+  <rect x="170" y="150" width="60" height="80" rx="8" fill="#E94444"/>
+  <circle cx="200" cy="130" r="20" fill="#E94444"/>
+  <rect x="190" y="160" width="20" height="40" rx="4" fill="white"/>
+  
+  <!-- Location Pin -->
+  <circle cx="200" cy="180" r="8" fill="#E94444"/>
+  <path d="M200 188 L200 220" stroke="#E94444" stroke-width="2"/>
+  
+  <!-- Globe -->
+  <circle cx="200" cy="150" r="40" stroke="#E94444" stroke-width="2" fill="none"/>
+  <path d="M160 150 L240 150" stroke="#E94444" stroke-width="2"/>
+  <path d="M200 110 L200 190" stroke="#E94444" stroke-width="2"/>
+</svg> 

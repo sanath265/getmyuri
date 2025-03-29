@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/home.css';
 
@@ -11,6 +11,26 @@ function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
   const [urlError, setUrlError] = useState('');
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProgress((prevProgress) => {
+        if (prevProgress >= 100) {
+          setCurrentSlide((prevSlide) => (prevSlide + 1) % 3);
+          return 0;
+        }
+        return prevProgress + 1;
+      });
+    }, 50);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleSlideClick = (index) => {
+    setCurrentSlide(index);
+    setProgress(0);
+  };
 
   const isValidUrl = (urlString) => {
     try {
@@ -109,18 +129,40 @@ function Home() {
         <div className="right-section">
           <div className="carousel-container">
             <div className="carousel-content">
-              <div className="carousel-slide">
+              <div 
+                className={`carousel-slide ${currentSlide === 0 ? 'active' : ''}`}
+                onClick={() => handleSlideClick(0)}
+              >
                 <h2>Track Your Link Performance</h2>
                 <p>Get insights into your URLs with real-time analytics. Monitor clicks, locations, and referral sources effortlessly.</p>
                 <img src="/analytics-illustration.svg" alt="Analytics Dashboard" className="carousel-image" />
               </div>
+              <div 
+                className={`carousel-slide ${currentSlide === 1 ? 'active' : ''}`}
+                onClick={() => handleSlideClick(1)}
+              >
+                <h2>Secure Access to Your Links</h2>
+                <p>Protect your URLs with password or location-based restrictions. Ensure only the right audience can access your content, exactly where and when you want.</p>
+                <img src="/security-illustration.svg" alt="Secure Access" className="carousel-image" />
+              </div>
+              <div 
+                className={`carousel-slide ${currentSlide === 2 ? 'active' : ''}`}
+                onClick={() => handleSlideClick(2)}
+              >
+                <h2>Customize Your Links</h2>
+                <p>Assign manual aliases to your shortened links for quick recognition and easy management. Keep your URLs clean, memorable, and on-brand.</p>
+                <img src="/customize-illustration.svg" alt="Custom Links" className="carousel-image" />
+              </div>
+            </div>
+            <div className="progress-bar">
+              <div className="progress" style={{ width: `${progress}%` }}></div>
             </div>
             <div className="carousel-dots">
-              {[0, 1, 2, 3, 4].map((index) => (
+              {[0, 1, 2].map((index) => (
                 <button
                   key={index}
                   className={`carousel-dot ${currentSlide === index ? 'active' : ''}`}
-                  onClick={() => setCurrentSlide(index)}
+                  onClick={() => handleSlideClick(index)}
                 />
               ))}
             </div>

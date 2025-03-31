@@ -2,6 +2,25 @@
   text-align: center;
 }
 
+/* Ensure smooth transitions */
+.content-fade-enter {
+  opacity: 0;
+}
+
+.content-fade-enter-active {
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+
+.content-fade-exit {
+  opacity: 1;
+}
+
+.content-fade-exit-active {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;

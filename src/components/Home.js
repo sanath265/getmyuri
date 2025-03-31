@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
 import '../styles/home.css';
 
 function Home() {
@@ -12,6 +13,26 @@ function Home() {
   const [showPopup, setShowPopup] = useState(false);
   const [urlError, setUrlError] = useState('');
   const [progress, setProgress] = useState(0);
+  const [formErrors, setFormErrors] = useState({});
+  const [submitStatus, setSubmitStatus] = useState('');
+
+  const slides = [
+    {
+      title: "Shorten Your URLs",
+      description: "Create short, memorable links that are easy to share and track",
+      image: "/shorten-illustration.svg"
+    },
+    {
+      title: "Track Analytics",
+      description: "Get insights into your link performance with detailed analytics",
+      image: "/analytics-illustration.svg"
+    },
+    {
+      title: "getmyuri.com/r/mybrand",
+      description: "Customize your links with your own brand name",
+      image: "/customize-illustration.svg"
+    }
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -63,9 +84,98 @@ function Home() {
     // Handle URL shortening without sign in
   };
 
-  const handleSubmit = (e) => {
+  const validateName = (name) => {
+    return /^[A-Za-z\s]+$/.test(name);
+  };
+
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  // Real-time validation handlers
+  const handleFirstNameChange = (e) => {
+    const value = e.target.value;
+    setFirstName(value);
+    if (!value.trim()) {
+      setFormErrors(prev => ({ ...prev, firstName: 'First name is required' }));
+    } else if (!validateName(value)) {
+      setFormErrors(prev => ({ ...prev, firstName: 'First name should only contain letters' }));
+    } else {
+      setFormErrors(prev => ({ ...prev, firstName: undefined }));
+    }
+  };
+
+  const handleLastNameChange = (e) => {
+    const value = e.target.value;
+    setLastName(value);
+    if (!value.trim()) {
+      setFormErrors(prev => ({ ...prev, lastName: 'Last name is required' }));
+    } else if (!validateName(value)) {
+      setFormErrors(prev => ({ ...prev, lastName: 'Last name should only contain letters' }));
+    } else {
+      setFormErrors(prev => ({ ...prev, lastName: undefined }));
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (!value.trim()) {
+      setFormErrors(prev => ({ ...prev, email: 'Email is required' }));
+    } else if (!validateEmail(value)) {
+      setFormErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+    } else {
+      setFormErrors(prev => ({ ...prev, email: undefined }));
+    }
+  };
+
+  const handleMessageChange = (e) => {
+    const value = e.target.value;
+    setMessage(value);
+    if (!value.trim()) {
+      setFormErrors(prev => ({ ...prev, message: 'Message is required' }));
+    } else if (value.length < 10) {
+      setFormErrors(prev => ({ ...prev, message: 'Message must be at least 10 characters long' }));
+    } else {
+      setFormErrors(prev => ({ ...prev, message: undefined }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle contact form submission
+    
+    // Check if there are any errors
+    if (Object.values(formErrors).some(error => error !== undefined)) {
+      return;
+    }
+
+    try {
+      const templateParams = {
+        from_name: `${firstName} ${lastName}`,
+        from_email: email,
+        message: message,
+      };
+
+      const response = await emailjs.send(
+        'service_dp4satq',
+        'template_c0vrjv9',
+        templateParams,
+        'heLUbLtK3YQlDhawm'
+      );
+
+      if (response.status === 200) {
+        setSubmitStatus('success');
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setMessage('');
+        setFormErrors({});
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      setSubmitStatus('error');
+    }
   };
 
   return (
@@ -100,28 +210,55 @@ function Home() {
                 type="text"
                 placeholder="First Name"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={handleFirstNameChange}
+                className={formErrors.firstName ? 'error' : ''}
               />
+              {formErrors.firstName && (
+                <span className="error-message">{formErrors.firstName}</span>
+              )}
+              
               <input
                 type="text"
                 placeholder="Last Name"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={handleLastNameChange}
+                className={formErrors.lastName ? 'error' : ''}
               />
+              {formErrors.lastName && (
+                <span className="error-message">{formErrors.lastName}</span>
+              )}
+              
               <input
                 type="email"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
+                className={formErrors.email ? 'error' : ''}
               />
+              {formErrors.email && (
+                <span className="error-message">{formErrors.email}</span>
+              )}
+              
               <textarea
                 placeholder="Message"
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={handleMessageChange}
+                className={formErrors.message ? 'error' : ''}
               />
+              {formErrors.message && (
+                <span className="error-message">{formErrors.message}</span>
+              )}
+              
               <button type="submit" className="submit-button">
                 Submit
               </button>
+              
+              {submitStatus === 'success' && (
+                <p className="success-message">Thank you for your message! We'll get back to you soon.</p>
+              )}
+              {submitStatus === 'error' && (
+                <p className="error-message">Sorry, there was an error sending your message. Please try again.</p>
+              )}
             </form>
           </div>
         </div>

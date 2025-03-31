@@ -5,12 +5,11 @@
   
   <!-- Original URL -->
   <rect x="70" y="100" width="260" height="40" fill="white" rx="4" stroke="#E94444" stroke-width="1"/>
-  <text x="80" y="125" fill="#666" font-family="Arial" font-size="14">https://example.com/very/long/url/that/needs/shortening</text>
+  <text x="80" y="125" fill="#666" font-family="Arial" font-size="14">https://example.com/very/long/url/that/n</text>
   
   <!-- Custom Alias Input -->
   <rect x="70" y="160" width="180" height="40" fill="white" rx="4" stroke="#E94444" stroke-width="1"/>
-  <text x="80" y="185" fill="#666" font-family="Arial" font-size="14">getmyuri.com/</text>
-  <text x="180" y="185" fill="#E94444" font-family="Arial" font-size="14">my-brand</text>
+  <text x="80" y="185" fill="#666" font-family="Arial" font-size="14">getmyuri.com/r/mybrand</text>
   
   <!-- Customization Options -->
   <rect x="270" y="160" width="60" height="40" fill="#E94444" rx="4"/>

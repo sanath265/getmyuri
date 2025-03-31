@@ -1,0 +1,1053 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.main-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+  border-bottom: 1px solid #e1e1e1;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.main-nav h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  flex: 1;
+}
+
+.main-nav .logout-btn {
+  padding: 0.5rem 1rem;
+  background: #E94444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  min-width: 80px;
+  white-space: nowrap;
+}
+
+.content-container {
+  display: flex;
+  flex: 1;
+  gap: 1rem;
+  padding: 1rem;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+.customize-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  min-width: 0;
+}
+
+.customize-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.customize-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.customize-container::-webkit-scrollbar-thumb {
+  background-color: #E94444;
+  border-radius: 3px;
+}
+
+.customize-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  padding-bottom: calc(2rem + 100px);
+  height: calc(100vh - 64px - 2rem);
+  position: relative;
+}
+
+.customize-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.customize-form::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.customize-form::-webkit-scrollbar-thumb {
+  background-color: #E94444;
+  border-radius: 3px;
+}
+
+.form-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: 120px;
+}
+
+.stats-container {
+  width: 400px;
+  flex-shrink: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  height: 100%;
+}
+
+.stats-list {
+  height: 100%;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stats-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.stats-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.stats-list::-webkit-scrollbar-thumb {
+  background-color: #E94444;
+  border-radius: 3px;
+}
+
+.stats-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.stats-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.stats-item .copy-btn {
+  margin-right: 12px;
+  padding: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-item .url {
+  flex: 1;
+  margin-right: 16px;
+  font-size: 14px;
+  color: #333;
+  word-break: break-all;
+}
+
+.stats-item .views {
+  display: flex;
+  align-items: center;
+  color: #666;
+  font-size: 14px;
+  margin-right: 12px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+
+.stats-item .views-count {
+  margin-right: 5px;
+  font-weight: 500;
+}
+
+.stats-item .options-btn {
+  padding: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.options-overlay {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 150px;
+  padding: 8px 0;
+  transform-origin: top right;
+  animation: scaleIn 0.2s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.options-overlay button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #333;
+  font-size: 14px;
+  text-align: left;
+  transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 11;
+}
+
+.options-overlay button:hover {
+  background: #f8f9fa;
+}
+
+.options-overlay button svg {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+}
+
+.options-overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+}
+
+/* Remove the old nav styles */
+.customize-nav {
+  display: none;
+}
+
+.customize-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.customize-form {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #E94444 transparent;
+}
+
+.customize-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.customize-form::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.customize-form::-webkit-scrollbar-thumb {
+  background-color: #E94444;
+  border-radius: 3px;
+}
+
+.form-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: 100px; /* Increased space for generate button */
+}
+
+.customize-form h2 {
+  margin-bottom: 2rem;
+  color: #333;
+  text-align: center;
+  font-size: 1.5rem;
+  padding: 0 1rem;
+  word-wrap: break-word;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group input.error-input {
+  border-color: #f44336;
+}
+
+.alias-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.base-url {
+  display: flex;
+  align-items: center;
+}
+
+.base-url-input {
+  background: #f5f5f5;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  color: #666;
+  width: 100%;
+  cursor: not-allowed;
+}
+
+.alias-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alias-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.add-alias-btn,
+.remove-alias-btn {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.add-alias-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.add-alias-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.remove-alias-btn {
+  background: #f44336;
+  color: white;
+}
+
+.add-alias-btn:not(:disabled):hover {
+  background: #43A047;
+}
+
+.remove-alias-btn:hover {
+  background: #E53935;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+/* Loading indicator */
+.button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loader {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.location-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #E94444;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s ease;
+}
+
+.location-btn:hover:not(:disabled) {
+  background: #D43030;
+}
+
+.location-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.location-info {
+  background: #f5f5f5;
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.location-info p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.edit-location-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s ease;
+}
+
+.edit-location-btn:hover {
+  background: #1976D2;
+}
+
+.expiration-inputs {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.expiration-inputs input[type="date"] {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 1rem;
+  min-width: 200px;
+}
+
+.expiration-inputs input[type="date"].error-input,
+.clock-face select.error-input {
+  border-color: #f44336;
+}
+
+.time-picker {
+  display: flex;
+  align-items: center;
+}
+
+.clock-face {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.clock-face select {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  min-width: 65px;
+  text-align: center;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem top 50%;
+  background-size: 0.65rem auto;
+}
+
+.clock-face select:hover {
+  border-color: #cbd5e0;
+}
+
+.clock-face select:focus {
+  outline: none;
+  border-color: #E94444;
+}
+
+.clock-face .time-separator {
+  font-size: 1.25rem;
+  color: #4a5568;
+  margin: 0 0.25rem;
+}
+
+.generate-btn-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: calc(100% - 432px);
+  background: white;
+  padding: 1rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.generate-btn {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  display: block;
+  background: #E94444;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.generate-btn:hover:not(:disabled) {
+  background: #D43030;
+}
+
+.generate-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Location Modal */
+.location-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1001;
+}
+
+.map-modal {
+  max-width: 800px;
+}
+
+.modal-content h3 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.modal-content p {
+  margin-bottom: 1.5rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.map-container {
+  height: 300px;
+  width: 100%;
+  margin: 1rem 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.radius-control {
+  margin: 1rem 0;
+}
+
+.radius-control label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.radius-control input[type="range"] {
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.radius-control select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.save-btn,
+.cancel-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.save-btn {
+  background: #E94444;
+  color: white;
+  flex: 1;
+}
+
+.save-btn:hover {
+  background: #D43030;
+}
+
+.cancel-btn {
+  background: #e2e8f0;
+  color: #4a5568;
+  flex: 1;
+}
+
+.cancel-btn:hover {
+  background: #cbd5e0;
+}
+
+.customize-nav h1 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.customize-nav .logout-btn {
+  background: #E94444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.customize-nav .logout-btn:hover {
+  background: #D43030;
+}
+
+/* Mobile and Tablet Responsive Design */
+@media (max-width: 992px) {
+  .content-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 64px);
+    overflow: visible;
+  }
+
+  .customize-container {
+    min-height: auto;
+    flex: none;
+    height: auto;
+  }
+
+  .customize-form {
+    height: auto;
+    min-height: 0;
+    padding-bottom: calc(1.5rem + 100px);
+  }
+
+  .stats-container {
+    width: 100%;
+    order: 2;
+    height: auto;
+    max-height: 400px;
+  }
+
+  .stats-list {
+    max-height: 400px;
+  }
+
+  .generate-btn-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: white;
+    padding: 1rem;
+    z-index: 1000;
+  }
+
+  .form-content {
+    padding-bottom: 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-nav {
+    padding: 0.75rem 1rem;
+  }
+
+  .content-container {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .customize-form {
+    padding: 1rem;
+  }
+
+  .stats-container {
+    max-height: 350px;
+  }
+
+  .stats-list {
+    padding: 1rem;
+    max-height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-nav {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .content-container {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .customize-form {
+    padding: 0.75rem;
+  }
+
+  .stats-container {
+    max-height: 300px;
+  }
+
+  .stats-list {
+    padding: 0.75rem;
+    max-height: 300px;
+  }
+
+  .stats-item {
+    flex-wrap: wrap;
+    padding: 0.75rem;
+  }
+
+  .stats-item .url {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .generate-btn-container {
+    padding: 0.75rem;
+  }
+}
+
+/* Fix for iOS devices */
+@supports (-webkit-touch-callout: none) {
+  .app-container {
+    height: -webkit-fill-available;
+  }
+
+  .content-container {
+    min-height: calc(100vh - 64px);
+    min-height: calc(-webkit-fill-available - 64px);
+  }
+}
+
+/* Maintain aspect ratio for map container */
+.map-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  height: 0;
+  overflow: hidden;
+}
+
+.map-container .leaflet-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Keep existing styles but update specific values */
+.customize-container {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #E94444 transparent;
+}
+
+.stats-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #E94444 transparent;
+}
+
+/* Maintain consistent form styling */
+.form-group label {
+  font-size: clamp(0.875rem, 1vw, 1rem);
+}
+
+.form-group input,
+.form-group select {
+  font-size: clamp(0.875rem, 1vw, 1rem);
+  padding: clamp(0.625rem, 1vw, 0.75rem);
+}
+
+/* Ensure buttons remain clickable on touch devices */
+.copy-btn,
+.options-btn,
+.add-alias-btn,
+.remove-alias-btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.timezone-indicator {
+  margin-left: 8px;
+  padding: 4px 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 480px) {
+  .main-nav h1 {
+    font-size: 1.25rem;
+  }
+
+  .customize-form h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .customize-form {
+    padding: 1rem;
+  }
+
+  .modal-content {
+    padding: 1rem;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+  }
+
+  .modal-buttons button {
+    width: 100%;
+  }
+
+  .base-url-input,
+  .alias-input {
+    font-size: 0.875rem;
+    padding: 0.625rem;
+  }
+
+  .clock-face {
+    padding: 0.25rem;
+  }
+
+  .clock-face select {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .timezone-indicator {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+  }
+
+  .location-info {
+    font-size: 0.875rem;
+  }
+
+  .location-info p {
+    margin: 0.25rem 0;
+  }
+}
+
+/* Fix for modals on iOS */
+@supports (-webkit-touch-callout: none) {
+  .location-modal {
+    position: absolute;
+  }
+}
+
+/* MacBook specific adjustments */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .customize-container {
+    overflow: hidden;
+    height: calc(100vh - 80px);
+  }
+
+  .customize-form {
+    height: 100%;
+    overflow-y: auto;
+    padding: 1.5rem;
+    padding-bottom: calc(1.5rem + 100px);
+  }
+
+  .form-content {
+    height: auto;
+    padding-bottom: 140px;
+  }
+
+  .generate-btn-container {
+    position: fixed;
+    bottom: 0;
+    width: calc(100% - 432px);
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Ensure proper scrolling on smaller heights */
+@media (max-height: 800px) {
+  .customize-form {
+    padding: 1.5rem;
+    padding-bottom: calc(1.5rem + 100px);
+  }
+
+  .form-content {
+    padding-bottom: 140px;
+  }
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dashboard-btn {
+  padding: 0.5rem 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.dashboard-btn:hover {
+  background: #0056b3;
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    gap: 0.5rem;
+  }
+
+  .dashboard-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+  }
+} 

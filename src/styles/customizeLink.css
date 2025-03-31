@@ -502,6 +502,7 @@
 .time-picker {
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .clock-face {
@@ -511,6 +512,8 @@
   background: white;
   padding: 0.5rem;
   border-radius: 4px;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .clock-face select {
@@ -529,6 +532,8 @@
   background-repeat: no-repeat;
   background-position: right 0.7rem top 50%;
   background-size: 0.65rem auto;
+  flex: 1;
+  max-width: 120px;
 }
 
 .clock-face select:hover {
@@ -544,6 +549,7 @@
   font-size: 1.25rem;
   color: #4a5568;
   margin: 0 0.25rem;
+  padding: 0 0.5rem;
 }
 
 .generate-btn-container {
@@ -840,6 +846,22 @@
     padding: 0.75rem;
     font-size: 0.9rem;
   }
+
+  .clock-face {
+    padding: 0.4rem;
+  }
+
+  .clock-face select {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    min-width: 50px;
+    max-width: 100px;
+  }
+
+  .clock-face .time-separator {
+    font-size: 1rem;
+    padding: 0 0.25rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -910,17 +932,27 @@
   }
 
   .time-picker {
-    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .clock-face {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
+    padding: 0.5rem;
   }
 
   .clock-face select {
-    width: 45%;
-    min-width: 45%;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    padding: 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  .clock-face .time-separator {
+    font-size: 0.9rem;
+    padding: 0 0.25rem;
   }
 }
 

@@ -408,12 +408,9 @@ function CustomizeLink({ setIsLoggedIn }) {
       <nav className="main-nav">
         <h1>Get My URL</h1>
         <div className="nav-links">
-          <button onClick={() => navigate('/dashboard')} className="dashboard-btn">
-            Dashboard
-          </button>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
-          </button>
+          <button className="contact-btn" onClick={() => navigate('/contact')}>Contact Us</button>
+          <button className="dashboard-btn" onClick={() => navigate('/dashboard')}>Dashboard</button>
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
       </nav>
       <div className="content-container">

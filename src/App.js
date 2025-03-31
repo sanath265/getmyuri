@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import CustomizeLink from './components/CustomizeLink';
 import Dashboard from './components/Dashboard';
+import Contact from './components/Contact';
 import './App.css';
 
 function App() {
@@ -71,6 +72,10 @@ function App() {
               <Dashboard setIsLoggedIn={setIsLoggedIn} />
             </ProtectedRoute>
           } 
+        />
+        <Route 
+          path="/contact" 
+          element={<Contact isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />}
         />
       </Routes>
     </Router>

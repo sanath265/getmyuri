@@ -35,12 +35,9 @@ function Dashboard({ setIsLoggedIn }) {
       <nav className="main-nav">
         <h1>Get My URL</h1>
         <div className="nav-links">
-          <button onClick={() => navigate('/')} className="home-btn">
-            Create Link
-          </button>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
-          </button>
+          <button className="contact-btn" onClick={() => navigate('/contact')}>Contact Us</button>
+          <button className="dashboard-btn" onClick={() => navigate('/')}>Create Link</button>
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
       </nav>
 

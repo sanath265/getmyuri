@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/dashboard.css';
 import Toast from './Toast';
+import { useAuth } from '../context/AuthContext';
 
-function Dashboard({ setIsLoggedIn }) {
+function Dashboard() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [links] = useState([
     { url: 'getmyuri.com/myportfolio', views: 1 },
     { url: 'getmyuri.com/myportfolio', views: 5 },
@@ -15,7 +17,7 @@ function Dashboard({ setIsLoggedIn }) {
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
-    setIsLoggedIn(false);
+    logout();
     navigate('/');
   };
 

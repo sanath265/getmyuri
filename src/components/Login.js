@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/login.css';
+import { useAuth } from '../context/AuthContext';
 
-function Login({ setIsLoggedIn }) {
+function Login() {
   const [Email, setEmail] = useState('');
   const [Password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,7 +18,7 @@ function Login({ setIsLoggedIn }) {
     if (Email === 'admin@gmail.com' && Password === 'admin') {
       // Store login state in localStorage
       localStorage.setItem('isLoggedIn', 'true');
-      setIsLoggedIn(true);
+      login();
       navigate('/'); // Redirect to home page after successful login
     } else {
       setError('Invalid email or password');

@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
 import '../styles/contact.css';
+import { useAuth } from '../context/AuthContext';
 
-function Contact({ isLoggedIn, setIsLoggedIn }) {
+function Contact() {
   const navigate = useNavigate();
+  const { isLoggedIn, logout } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -14,7 +16,7 @@ function Contact({ isLoggedIn, setIsLoggedIn }) {
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
-    setIsLoggedIn(false);
+    logout();
     navigate('/');
   };
 

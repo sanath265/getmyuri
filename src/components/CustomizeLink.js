@@ -9,6 +9,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import '../styles/customizeLink.css';
 import { FaCopy, FaEllipsisV, FaEye, FaPencilAlt, FaTrash } from 'react-icons/fa';
 import Toast from './Toast';
+import { useAuth } from '../context/AuthContext';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -154,8 +155,9 @@ function StatsPanel() {
   );
 }
 
-function CustomizeLink({ setIsLoggedIn }) {
+function CustomizeLink() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [linkDestination, setLinkDestination] = useState('');
   const [linkError, setLinkError] = useState('');
   const [aliases, setAliases] = useState(['']); // Array of aliases
@@ -256,7 +258,7 @@ function CustomizeLink({ setIsLoggedIn }) {
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
-    setIsLoggedIn(false);
+    logout();
     navigate('/');
   };
 

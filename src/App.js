@@ -1,84 +1,40 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
-import CustomizeLink from './components/CustomizeLink';
 import Dashboard from './components/Dashboard';
+import CustomizeLink from './components/CustomizeLink';
 import Contact from './components/Contact';
 import './App.css';
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Check login status from localStorage on app load
-    const loginStatus = localStorage.getItem('isLoggedIn') === 'true';
-    setIsLoggedIn(loginStatus);
-    setIsLoading(false);
-  }, []);
-
-  // Don't render anything while checking login status
-  if (isLoading) {
-    return null;
-  }
-
-  // Protected Route component
-  const ProtectedRoute = ({ children }) => {
-    if (!isLoggedIn) {
-      return <Navigate to="/login" />;
-    }
-    return children;
-  };
-
-  // Public Route component (accessible only when not logged in)
-  const PublicRoute = ({ children }) => {
-    if (isLoggedIn) {
-      return <Navigate to="/" />;
-    }
-    return children;
-  };
-
-  // Render home page based on login status
-  const HomeRoute = () => {
-    return isLoggedIn ? <CustomizeLink setIsLoggedIn={setIsLoggedIn} /> : <Home />;
-  };
-
+function AppRoutes() {
+  const { isLoggedIn } = useAuth();
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomeRoute />} />
-        <Route 
-          path="/login" 
-          element={
-            <PublicRoute>
-              <Login setIsLoggedIn={setIsLoggedIn} />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/register" 
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard setIsLoggedIn={setIsLoggedIn} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/contact" 
-          element={<Contact isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />}
-        />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={isLoggedIn ? <CustomizeLink /> : <Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/customize" element={<CustomizeLink />} />
+      <Route path="/contact" element={<Contact />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <ToastContainer />
+          <AppRoutes />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

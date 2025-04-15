@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import emailjs from '@emailjs/browser';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import '../styles/home.css';
 
 function Home() {
+  const { isLoggedIn } = useAuth();
   const [url, setUrl] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -15,6 +18,8 @@ function Home() {
   const [progress, setProgress] = useState(0);
   const [formErrors, setFormErrors] = useState({});
   const [submitStatus, setSubmitStatus] = useState('');
+  const [shortUrl, setShortUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const slides = [
     {
@@ -53,18 +58,28 @@ function Home() {
     setProgress(0);
   };
 
-  const isValidUrl = (urlString) => {
+  // Helper to normalize URL
+  const normalizeUrl = (url) => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return 'https://' + url;
+    }
+    return url;
+  };
+
+  const isValidUrl = (url) => {
+    // Validate the normalized URL
     try {
-      new URL(urlString);
+      new URL(normalizeUrl(url));
       return true;
     } catch (e) {
       return false;
     }
   };
 
-  const handleGenerateLink = (e) => {
+  const handleGenerateLink = async (e) => {
     e.preventDefault();
     setUrlError('');
+    setShortUrl('');
 
     if (!url.trim()) {
       setUrlError('Please enter a URL');
@@ -76,12 +91,47 @@ function Home() {
       return;
     }
 
-    setShowPopup(true);
+    setIsLoading(true);
+    try {
+      const normalized = normalizeUrl(url);
+      const response = await fetch('http://www.getmyuri.com/api/default/shorten', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ link: normalized }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to shorten URL');
+      }
+
+      const data = await response.json();
+      setShortUrl(`http://www.getmyuri.com/r/${data.shortUrl}`);
+      setShowPopup(true);
+    } catch (err) {
+      setUrlError('Failed to shorten URL. Please try again.');
+      console.error('Error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shortUrl);
+    toast.success('Link copied to clipboard!', {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
   };
 
   const handleContinueWithoutSignIn = () => {
     setShowPopup(false);
-    // Handle URL shortening without sign in
   };
 
   const validateName = (name) => {
@@ -92,7 +142,6 @@ function Home() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  // Real-time validation handlers
   const handleFirstNameChange = (e) => {
     const value = e.target.value;
     setFirstName(value);
@@ -141,48 +190,19 @@ function Home() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Check if there are any errors
-    if (Object.values(formErrors).some(error => error !== undefined)) {
-      return;
-    }
-
-    try {
-      const templateParams = {
-        from_name: `${firstName} ${lastName}`,
-        from_email: email,
-        message: message,
-      };
-
-      const response = await emailjs.send(
-        'service_dp4satq',
-        'template_c0vrjv9',
-        templateParams,
-        'heLUbLtK3YQlDhawm'
-      );
-
-      if (response.status === 200) {
-        setSubmitStatus('success');
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-        setMessage('');
-        setFormErrors({});
-      } else {
-        setSubmitStatus('error');
-      }
-    } catch (error) {
-      setSubmitStatus('error');
-    }
-  };
-
   return (
     <div className="home-container">
       <nav className="navbar">
         <h1>Get My Url</h1>
-        <Link to="/login" className="sign-in-button">Sign in</Link>
+        {isLoggedIn ? (
+          <div className="nav-links">
+            <Link to="/customize" className="nav-btn">Create Link</Link>
+            <Link to="/dashboard" className="nav-btn">Dashboard</Link>
+            <Link to="/logout" className="nav-btn logout-btn">Logout</Link>
+          </div>
+        ) : (
+          <Link to="/login" className="sign-in-button">Sign in</Link>
+        )}
       </nav>
 
       <div className="main-content">
@@ -197,15 +217,28 @@ function Home() {
                 className={`url-input ${urlError ? 'error' : ''}`}
               />
               {urlError && <span className="error-message">{urlError}</span>}
-              <button onClick={handleGenerateLink} className="generate-button">
-                Generate Link
+              <button onClick={handleGenerateLink} className="generate-button" disabled={isLoading}>
+                {isLoading ? 'Generating...' : 'Generate Link'}
               </button>
             </div>
+            {shortUrl && (
+              <div className="short-url-container">
+                <div className="short-url-box">
+                  <span className="short-url highlight-url">{shortUrl}</span>
+                  <button className="copy-btn" onClick={handleCopy} aria-label="Copy URL">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                      <rect x="5" y="5" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="contact-section">
             <h2>Contact us for queries</h2>
-            <form onSubmit={handleSubmit} className="contact-form">
+            <form className="contact-form">
               <input
                 type="text"
                 placeholder="First Name"
@@ -247,17 +280,6 @@ function Home() {
               />
               {formErrors.message && (
                 <span className="error-message">{formErrors.message}</span>
-              )}
-              
-              <button type="submit" className="submit-button">
-                Submit
-              </button>
-              
-              {submitStatus === 'success' && (
-                <p className="success-message">Thank you for your message! We'll get back to you soon.</p>
-              )}
-              {submitStatus === 'error' && (
-                <p className="error-message">Sorry, there was an error sending your message. Please try again.</p>
               )}
             </form>
           </div>

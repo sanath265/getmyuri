@@ -273,7 +273,7 @@ function CustomizeLink() {
   // Function to normalize URL only if no protocol exists
   const normalizeUrl = (url) => {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      return 'https://' + url;
+      return 'http://' + url;
     }
     return url;
   };
@@ -318,7 +318,7 @@ function CustomizeLink() {
       } finally {
         setAliasCheckLoading(false);
       }
-    }, 1000), // 1 second debounce
+    }, 1000),
     []
   );
 

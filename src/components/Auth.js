@@ -55,7 +55,7 @@ function Auth() {
 
     try {
       // Build the URL with parameters
-      let url = `http://www.getmyuri.com/r/${queryParams.aliasPath}`;
+      let url = `https://www.getmyuri.com/r/${queryParams.aliasPath}`;
       const params = new URLSearchParams();
 
       // Add password if required
@@ -102,20 +102,17 @@ function Auth() {
       // Handle the redirect URL
       const redirectUrl = data.redirectUrl || url;
       
-      // For external URLs, use a server-side redirect or open in new tab
-      if (redirectUrl.startsWith('http') || redirectUrl.startsWith('https')) {
-        // Option 1: Open in new tab
-        window.open(redirectUrl, '_blank');
-        
-        // Option 2: Replace current window location
-        // window.location.replace(redirectUrl);
-        
-        // Show success message in current window
-        setManualSuccess('Link opened in new tab');
+      // For external URLs, ensure HTTPS if possible
+      if (redirectUrl.startsWith('http://')) {
+        // Try to upgrade to HTTPS
+        const httpsUrl = redirectUrl.replace('http://', 'https://');
+        window.open(httpsUrl, '_blank');
       } else {
-        // For internal URLs, use normal navigation
-        window.location.href = redirectUrl;
+        window.open(redirectUrl, '_blank');
       }
+      
+      // Show success message in current window
+      setManualSuccess('Link opened in new tab');
     } catch (err) {
       setError(err.message || 'Authentication failed. Please try again.');
     } finally {

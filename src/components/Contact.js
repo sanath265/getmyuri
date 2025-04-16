@@ -117,7 +117,10 @@ function Contact() {
     <div className="contact-container">
       <nav className="main-nav">
         <div className="nav-left">
-          <h1>Get My URL</h1>
+          <span className="brand-title">
+            <span className="brand-get">GET</span>
+            <span className="brand-myurl">MYURI</span>
+          </span>
         </div>
         <div className="nav-links">
           {isLoggedIn ? (

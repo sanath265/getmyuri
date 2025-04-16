@@ -553,4 +553,76 @@
 .Toastify__toast-body {
   font-size: 0.9rem;
   color: white;
+}
+
+.brand-title {
+  font-weight: bold;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+}
+.brand-get {
+  color: #000;
+  font-weight: bold;
+}
+.brand-myurl {
+  color: #E94444;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+.mode-toggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 2rem;
+}
+.mode-pill {
+  padding: 0.6rem 2.2rem;
+  border: 1.5px solid #E94444;
+  background: white;
+  color: #000;
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  margin-right: -1.5px;
+  z-index: 1;
+}
+.mode-pill.selected {
+  background: #E94444;
+  color: #fff;
+  border: 1.5px solid #E94444;
+  z-index: 2;
+}
+.mode-pill:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.mode-pill:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-right: 0;
+}
+
+.manual-top-spacing {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.url-shortener.manual-wide {
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .url-shortener.manual-wide {
+    max-width: 100%;
+    width: 100%;
+  }
 } 

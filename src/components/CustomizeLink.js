@@ -8,7 +8,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import '../styles/customizeLink.css';
 import { FaCopy, FaEllipsisV, FaEye, FaPencilAlt, FaTrash } from 'react-icons/fa';
-import Toast from './Toast';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 
 // Fix Leaflet default marker icon issue
@@ -62,35 +62,55 @@ function MapComponent({ location, userLocation, setLocation }) {
 
 function StatsPanel() {
   const [activeOptionsIndex, setActiveOptionsIndex] = useState(null);
-  const [showToast, setShowToast] = useState(false);
-  
-  // Limit to 6 items
-  const mockData = [
-    { url: 'getmyuri.com/myportfolio', views: 1 },
-    { url: 'getmyuri.com/myresume', views: 5 },
-    { url: 'getmyuri.com/myblog', views: 10 },
-    { url: 'getmyuri.com/myprojects', views: 3 },
-    { url: 'getmyuri.com/mycontact', views: 7 },
-    { url: 'getmyuri.com/mylinks', views: 2 }
-  ];
+  const [stats, setStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleCopy = (url) => {
+  useEffect(() => {
+    async function fetchStats() {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await fetch('http://www.getmyuri.com/api/links/click-stats?username=vijay');
+        if (!response.ok) throw new Error('Failed to fetch stats');
+        const data = await response.json();
+        setStats(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError('Failed to load stats');
+        setStats([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  const handleCopy = (alias) => {
+    const url = `http://www.getmyuri.com/r/${alias}`;
     navigator.clipboard.writeText(url);
-    setShowToast(true);
+    toast.success('Link copied to clipboard!', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
   };
 
-  const handleView = (url) => {
-    window.open(`https://${url}`, '_blank');
+  const handleView = (alias) => {
+    window.open(`https://getmyuri.com/r/${alias}`, '_blank');
   };
 
-  const handleEdit = (url) => {
+  const handleEdit = (alias) => {
     // Handle edit action
-    console.log('Edit:', url);
+    console.log('Edit:', alias);
   };
 
-  const handleDelete = (url) => {
+  const handleDelete = (alias) => {
     // Handle delete action
-    console.log('Delete:', url);
+    console.log('Delete:', alias);
   };
 
   const handleOptionsClick = (index) => {
@@ -103,54 +123,56 @@ function StatsPanel() {
 
   return (
     <div className="stats-container">
-      {showToast && (
-        <Toast 
-          message="Link copied to clipboard!" 
-          onClose={() => setShowToast(false)} 
-        />
-      )}
       {activeOptionsIndex !== null && (
         <div className="options-overlay-backdrop" onClick={handleBackdropClick} />
       )}
-      {mockData.map((item, index) => (
-        <div key={index} className="stats-item">
-          <button 
-            className="copy-btn" 
-            onClick={() => handleCopy(item.url)}
-            title="Copy URL"
-          >
-            <FaCopy />
-          </button>
-          <span className="url">{item.url}</span>
-          <div className="views">
-            <span className="views-count">{item.views}</span>
-            <span>views</span>
-          </div>
-          <button 
-            className="options-btn" 
-            title="More options"
-            onClick={() => handleOptionsClick(index)}
-          >
-            <FaEllipsisV />
-          </button>
-          {activeOptionsIndex === index && (
-            <div className="options-overlay">
-              <button onClick={() => handleView(item.url)}>
-                <FaEye />
-                View
-              </button>
-              <button onClick={() => handleEdit(item.url)}>
-                <FaPencilAlt />
-                Edit
-              </button>
-              <button onClick={() => handleDelete(item.url)}>
-                <FaTrash />
-                Delete
-              </button>
+      {loading ? (
+        <div className="stats-loading">Loading...</div>
+      ) : error ? (
+        <div className="stats-error">{error}</div>
+      ) : stats.length === 0 ? (
+        <div className="stats-empty">No links generated</div>
+      ) : (
+        stats.slice(0, 6).map((item, index) => (
+          <div key={item.id} className="stats-item">
+            <button 
+              className="copy-btn" 
+              onClick={() => handleCopy(item.alias)}
+              title="Copy URL"
+            >
+              <FaCopy />
+            </button>
+            <span className="url">{`getmyuri.com/r/${item.alias}`}</span>
+            <div className="views">
+              <span className="views-count">{item.clickCount}</span>
+              <span>views</span>
             </div>
-          )}
-        </div>
-      ))}
+            <button 
+              className="options-btn" 
+              title="More options"
+              onClick={() => handleOptionsClick(index)}
+            >
+              <FaEllipsisV />
+            </button>
+            {activeOptionsIndex === index && (
+              <div className="options-overlay">
+                <button onClick={() => handleView(item.alias)}>
+                  <FaEye />
+                  View
+                </button>
+                <button onClick={() => handleEdit(item.alias)}>
+                  <FaPencilAlt />
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(item.alias)}>
+                  <FaTrash />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 }
@@ -158,6 +180,15 @@ function StatsPanel() {
 function CustomizeLink() {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  // Mode state: 'automatic' or 'manual'
+  const [mode, setMode] = useState('automatic');
+
+  // Manual mode states (copied from Home.js logic)
+  const [manualUrl, setManualUrl] = useState('');
+  const [manualUrlError, setManualUrlError] = useState('');
+  const [manualShortUrl, setManualShortUrl] = useState('');
+  const [manualIsLoading, setManualIsLoading] = useState(false);
+
   const [linkDestination, setLinkDestination] = useState('');
   const [linkError, setLinkError] = useState('');
   const [aliases, setAliases] = useState(['']); // Array of aliases
@@ -405,177 +436,296 @@ function CustomizeLink() {
     // Handle form submission
   };
 
+  // Manual mode helpers
+  const normalizeUrl = (url) => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return 'https://' + url;
+    }
+    return url;
+  };
+  const isValidUrl = (url) => {
+    try {
+      new URL(normalizeUrl(url));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+  const handleManualGenerateLink = async (e) => {
+    e.preventDefault();
+    setManualUrlError('');
+    setManualShortUrl('');
+    if (!manualUrl.trim()) {
+      setManualUrlError('Please enter a URL');
+      return;
+    }
+    if (!isValidUrl(manualUrl)) {
+      setManualUrlError('Please enter a valid URL');
+      return;
+    }
+    setManualIsLoading(true);
+    try {
+      const normalized = normalizeUrl(manualUrl);
+      const response = await fetch('http://www.getmyuri.com/api/default/shorten', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ link: normalized }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to shorten URL');
+      }
+      const data = await response.json();
+      setManualShortUrl(`http://www.getmyuri.com/r/${data.shortUrl}`);
+    } catch (err) {
+      setManualUrlError('Failed to shorten URL. Please try again.');
+      console.error('Error:', err);
+    } finally {
+      setManualIsLoading(false);
+    }
+  };
+  const handleManualCopy = () => {
+    navigator.clipboard.writeText(manualShortUrl);
+    toast.success('Link copied to clipboard!', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  };
+
   return (
     <div className="app-container">
       <nav className="main-nav">
-        <h1>Get My URL</h1>
+        <span className="brand-title">
+          <span className="brand-get">GET</span>
+          <span className="brand-myurl">MYURI</span>
+        </span>
         <div className="nav-links">
           <button className="contact-btn" onClick={() => navigate('/contact')}>Contact Us</button>
           <button className="dashboard-btn" onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
       </nav>
-      <div className="content-container">
-        <div className="customize-container">
-          <div className="customize-form">
-            <h2>Customize Link</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Link Destination</label>
-                <input
-                  type="url"
-                  value={linkDestination}
-                  onChange={(e) => handleLinkDestinationChange(e.target.value)}
-                  placeholder="Enter URL (e.g., https://example.com)"
-                  required
-                  className={linkError ? 'error-input' : ''}
-                />
-                {linkError && <div className="error-message">{linkError}</div>}
-              </div>
+      <div className="content-container" style={{ background: '#fff', minHeight: '100vh', paddingBottom: '2rem' }}>
+        <div className="customize-container" style={{ background: '#fff', boxShadow: 'none', marginBottom: 0 }}>
+          {/* Mode Toggle */}
+          <div className="mode-toggle">
+            <button
+              type="button"
+              className={`mode-pill${mode === 'manual' ? ' selected' : ''}`}
+              onClick={() => setMode('manual')}
+            >
+              Manual
+            </button>
+            <button
+              type="button"
+              className={`mode-pill${mode === 'automatic' ? ' selected' : ''}`}
+              onClick={() => setMode('automatic')}
+            >
+              Automatic
+            </button>
+          </div>
 
-              <div className="form-group">
-                <label>Custom Alias</label>
-                <div className="alias-container">
-                  <div className="base-url">
-                    <input
-                      type="text"
-                      value="getmyuri.com/r"
-                      disabled
-                      className="base-url-input"
-                    />
-                  </div>
-                  {aliases.map((alias, index) => (
-                    <div key={index} className="alias-input-wrapper">
+          {/* Conditional UI */}
+          {mode === 'manual' ? (
+            // Manual mode: advanced CustomizeLink UI
+            <div className="customize-form" style={{ background: '#fff' }}>
+              <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <label>Link Destination</label>
+                  <input
+                    type="url"
+                    value={linkDestination}
+                    onChange={(e) => handleLinkDestinationChange(e.target.value)}
+                    placeholder="Enter URL (e.g., https://example.com)"
+                    required
+                    className={linkError ? 'error-input' : ''}
+                  />
+                  {linkError && <div className="error-message">{linkError}</div>}
+                </div>
+
+                <div className="form-group">
+                  <label>Custom Alias</label>
+                  <div className="alias-container">
+                    <div className="base-url">
                       <input
                         type="text"
-                        value={alias}
-                        onChange={(e) => handleAliasChange(e.target.value, index)}
-                        placeholder="Enter alias (min. 3 characters)"
-                        className="alias-input"
+                        value="getmyuri.com/r"
+                        disabled
+                        className="base-url-input"
                       />
-                      {index === aliases.length - 1 ? (
-                        <button
-                          type="button"
-                          className="add-alias-btn"
-                          onClick={addAlias}
-                          disabled={!!error || !alias}
-                        >
-                          +
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="remove-alias-btn"
-                          onClick={() => removeAlias(index)}
-                        >
-                          ×
-                        </button>
-                      )}
                     </div>
-                  ))}
+                    {aliases.map((alias, index) => (
+                      <div key={index} className="alias-input-wrapper">
+                        <input
+                          type="text"
+                          value={alias}
+                          onChange={(e) => handleAliasChange(e.target.value, index)}
+                          placeholder="Enter alias (min. 3 characters)"
+                          className="alias-input"
+                        />
+                        {index === aliases.length - 1 ? (
+                          <button
+                            type="button"
+                            className="add-alias-btn"
+                            onClick={addAlias}
+                            disabled={!!error || !alias}
+                          >
+                            +
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="remove-alias-btn"
+                            onClick={() => removeAlias(index)}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {error && <div className="error-message">{error}</div>}
                 </div>
-                {error && <div className="error-message">{error}</div>}
-              </div>
 
-              <div className="form-group">
-                <label>Password (Optional)</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Set password for link"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Expiration (MST)</label>
-                <div className="expiration-inputs">
+                <div className="form-group">
+                  <label>Password (Optional)</label>
                   <input
-                    type="date"
-                    value={expirationDate}
-                    onChange={(e) => handleExpirationDateChange(e.target.value)}
-                    min={getMSTDate()}
-                    className={expirationError ? 'error-input' : ''}
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Set password for link"
                   />
-                  <div className="time-picker">
-                    <div className="clock-face">
-                      <select 
-                        value={expirationHour} 
-                        onChange={(e) => handleExpirationTimeChange('hour', e.target.value)}
-                        className={expirationError ? 'error-input' : ''}
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
-                          <option key={hour} value={hour.toString().padStart(2, '0')}>
-                            {hour.toString().padStart(2, '0')}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="time-separator">:</span>
-                      <select 
-                        value={expirationMinute} 
-                        onChange={(e) => handleExpirationTimeChange('minute', e.target.value)}
-                        className={expirationError ? 'error-input' : ''}
-                      >
-                        {Array.from({ length: 60 }, (_, i) => i).map(minute => (
-                          <option key={minute} value={minute.toString().padStart(2, '0')}>
-                            {minute.toString().padStart(2, '0')}
-                          </option>
-                        ))}
-                      </select>
-                      <select 
-                        value={expirationAmPm} 
-                        onChange={(e) => handleExpirationTimeChange('ampm', e.target.value)}
-                        className={expirationError ? 'error-input' : ''}
-                      >
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
-                      </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Expiration (MST)</label>
+                  <div className="expiration-inputs">
+                    <input
+                      type="date"
+                      value={expirationDate}
+                      onChange={(e) => handleExpirationDateChange(e.target.value)}
+                      min={getMSTDate()}
+                      className={expirationError ? 'error-input' : ''}
+                    />
+                    <div className="time-picker">
+                      <div className="clock-face">
+                        <select 
+                          value={expirationHour} 
+                          onChange={(e) => handleExpirationTimeChange('hour', e.target.value)}
+                          className={expirationError ? 'error-input' : ''}
+                        >
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
+                            <option key={hour} value={hour.toString().padStart(2, '0')}>
+                              {hour.toString().padStart(2, '0')}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="time-separator">:</span>
+                        <select 
+                          value={expirationMinute} 
+                          onChange={(e) => handleExpirationTimeChange('minute', e.target.value)}
+                          className={expirationError ? 'error-input' : ''}
+                        >
+                          {Array.from({ length: 60 }, (_, i) => i).map(minute => (
+                            <option key={minute} value={minute.toString().padStart(2, '0')}>
+                              {minute.toString().padStart(2, '0')}
+                            </option>
+                          ))}
+                        </select>
+                        <select 
+                          value={expirationAmPm} 
+                          onChange={(e) => handleExpirationTimeChange('ampm', e.target.value)}
+                          className={expirationError ? 'error-input' : ''}
+                        >
+                          <option value="AM">AM</option>
+                          <option value="PM">PM</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
+                  {expirationError && <div className="error-message">{expirationError}</div>}
                 </div>
-                {expirationError && <div className="error-message">{expirationError}</div>}
-              </div>
 
-              <div className="form-group">
-                <label>Location Restriction</label>
-                {location.enabled ? (
-                  <div className="location-info">
-                    <p>Location: {location.position[0].toFixed(6)}°, {location.position[1].toFixed(6)}°</p>
-                    <p>Radius: {location.radius} {location.unit}</p>
+                <div className="form-group">
+                  <label>Location Restriction</label>
+                  {location.enabled ? (
+                    <div className="location-info">
+                      <p>Location: {location.position[0].toFixed(6)}°, {location.position[1].toFixed(6)}°</p>
+                      <p>Radius: {location.radius} {location.unit}</p>
+                      <button
+                        type="button"
+                        className="edit-location-btn"
+                        onClick={() => setShowLocationModal(true)}
+                      >
+                        Edit Location
+                      </button>
+                    </div>
+                  ) : (
                     <button
                       type="button"
-                      className="edit-location-btn"
-                      onClick={() => setShowLocationModal(true)}
+                      className="location-btn"
+                      onClick={handleLocationToggle}
+                      disabled={isLoadingLocation}
                     >
-                      Edit Location
+                      <div className="button-content">
+                        {isLoadingLocation && <div className="loader" />}
+                        <span>{isLoadingLocation ? 'Getting Location...' : 'Set Location'}</span>
+                      </div>
                     </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="location-btn"
-                    onClick={handleLocationToggle}
-                    disabled={isLoadingLocation}
-                  >
-                    <div className="button-content">
-                      {isLoadingLocation && <div className="loader" />}
-                      <span>{isLoadingLocation ? 'Getting Location...' : 'Set Location'}</span>
-                    </div>
+                  )}
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="generate-btn"
+                  disabled={!!linkError || !linkDestination || !!expirationError}
+                >
+                  Generate Link
+                </button>
+              </form>
+            </div>
+          ) : (
+            // Automatic mode: Home-like URL shortener
+            <>
+              <div className="url-shortener manual-wide manual-top-spacing">
+                <form onSubmit={handleManualGenerateLink} className="url-input-container">
+                  <input
+                    type="text"
+                    placeholder="Enter link here ..."
+                    value={manualUrl}
+                    onChange={e => setManualUrl(e.target.value)}
+                    className={`url-input ${manualUrlError ? 'error' : ''}`}
+                  />
+                  {manualUrlError && <span className="error-message">{manualUrlError}</span>}
+                  <button type="submit" className="generate-button" disabled={manualIsLoading}>
+                    {manualIsLoading ? 'Generating...' : 'Generate Link'}
                   </button>
+                </form>
+                {manualShortUrl && (
+                  <div className="short-url-container">
+                    <div className="short-url-box">
+                      <span className="short-url highlight-url">{manualShortUrl}</span>
+                      <button className="copy-btn" onClick={handleManualCopy} aria-label="Copy URL">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                          <rect x="5" y="5" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
-
-              <button 
-                type="submit" 
-                className="generate-btn"
-                disabled={!!linkError || !linkDestination || !!expirationError}
-              >
-                Generate Link
-              </button>
-            </form>
-          </div>
+              <StatsPanel />
+            </>
+          )}
         </div>
-        <StatsPanel />
+        {mode === 'manual' && <StatsPanel />}
       </div>
 
       {showLocationPermission && locationPermissionStatus === 'prompt' && (

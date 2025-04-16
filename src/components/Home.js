@@ -193,7 +193,10 @@ function Home() {
   return (
     <div className="home-container">
       <nav className="navbar">
-        <h1>Get My Url</h1>
+        <span className="brand-title">
+          <span className="brand-get">GET</span>
+          <span className="brand-myurl">MYURI</span>
+        </span>
         {isLoggedIn ? (
           <div className="nav-links">
             <Link to="/customize" className="nav-btn">Create Link</Link>

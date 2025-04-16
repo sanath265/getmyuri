@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f8f9fa;
+  background-color: #fff;
 }
 
 .main-nav {
@@ -37,6 +37,9 @@
 }
 
 .content-container {
+  background: #fff;
+  min-height: 100vh;
+  padding-bottom: 2rem;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -48,9 +51,10 @@
 }
 
 .customize-container {
-  background: white;
+  background: #fff;
+  box-shadow: none;
+  margin-bottom: 0;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 24px;
   width: 100%;
 }
@@ -256,7 +260,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: #f8f9fa;
+  background: #fff;
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1040,5 +1044,16 @@
   .stats-title {
     font-size: 1.1rem;
     margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .content-container {
+    padding-bottom: 0.5rem;
+    min-height: 80vh;
+  }
+  .customize-container {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
   }
 } 

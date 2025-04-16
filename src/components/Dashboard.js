@@ -35,7 +35,10 @@ function Dashboard() {
         />
       )}
       <nav className="main-nav">
-        <h1>Get My URL</h1>
+        <span className="brand-title">
+          <span className="brand-get">GET</span>
+          <span className="brand-myurl">MYURI</span>
+        </span>
         <div className="nav-links">
           <button className="contact-btn" onClick={() => navigate('/contact')}>Contact Us</button>
           <button className="dashboard-btn" onClick={() => navigate('/')}>Create Link</button>

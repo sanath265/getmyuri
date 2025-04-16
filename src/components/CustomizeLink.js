@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Circle, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -10,6 +10,7 @@ import '../styles/customizeLink.css';
 import { FaCopy, FaEllipsisV, FaEye, FaPencilAlt, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import { debounce } from 'lodash';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -71,7 +72,7 @@ function StatsPanel() {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch('http://www.getmyuri.com/api/links/click-stats?username=vijay');
+        const response = await fetch('http://www.getmyuri.com/api/links/click-stats?username=admin');
         if (!response.ok) throw new Error('Failed to fetch stats');
         const data = await response.json();
         setStats(Array.isArray(data) ? data : []);
@@ -181,13 +182,19 @@ function CustomizeLink() {
   const navigate = useNavigate();
   const { logout } = useAuth();
   // Mode state: 'automatic' or 'manual'
-  const [mode, setMode] = useState('automatic');
+  const [mode, setMode] = useState('manual');
 
   // Manual mode states (copied from Home.js logic)
   const [manualUrl, setManualUrl] = useState('');
   const [manualUrlError, setManualUrlError] = useState('');
   const [manualShortUrl, setManualShortUrl] = useState('');
   const [manualIsLoading, setManualIsLoading] = useState(false);
+
+  // Start time states
+  const [startDate, setStartDate] = useState('');
+  const [startHour, setStartHour] = useState('12');
+  const [startMinute, setStartMinute] = useState('00');
+  const [startAmPm, setStartAmPm] = useState('AM');
 
   const [linkDestination, setLinkDestination] = useState('');
   const [linkError, setLinkError] = useState('');
@@ -210,6 +217,110 @@ function CustomizeLink() {
   const [showLocationPermission, setShowLocationPermission] = useState(false);
   const [locationPermissionStatus, setLocationPermissionStatus] = useState('prompt');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  // Expiration fields for manual (advanced) mode
+  const [expMonths, setExpMonths] = useState('0');
+  const [expDays, setExpDays] = useState('0');
+  const [expHours, setExpHours] = useState('0');
+  const [expMinutes, setExpMinutes] = useState('0');
+  const [manualSuccess, setManualSuccess] = useState('');
+  const [manualError, setManualError] = useState('');
+
+  // Single loading and status state
+  const [aliasCheckLoading, setAliasCheckLoading] = useState(false);
+  const [aliasStatus, setAliasStatus] = useState(null);
+
+  // Add state for generated link
+  const [generatedLink, setGeneratedLink] = useState('');
+
+  // Convert local time to MDT Unix timestamp and subtract 6 hours
+  const getStartTimeMDT = () => {
+    let timestamp;
+    
+    if (!startDate) {
+      // If no date selected, use current time
+      timestamp = Date.now();
+    } else {
+      // Parse the selected date and time
+      const [year, month, day] = startDate.split('-').map(Number);
+      let hours = parseInt(startHour);
+      if (startAmPm === 'PM' && hours !== 12) hours += 12;
+      if (startAmPm === 'AM' && hours === 12) hours = 0;
+
+      // Create date in local timezone
+      const date = new Date(year, month - 1, day, hours, parseInt(startMinute));
+      timestamp = date.getTime();
+    }
+
+    // Subtract 6 hours (6 * 60 * 60 * 1000 milliseconds)
+    return timestamp - (6 * 60 * 60 * 1000);
+  };
+
+  // Function to handle copying the generated link
+  const handleCopyGeneratedLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    toast.success('Link copied to clipboard!', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  };
+
+  // Function to normalize URL only if no protocol exists
+  const normalizeUrl = (url) => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return 'https://' + url;
+    }
+    return url;
+  };
+
+  // Basic URL validation (only used in automatic mode)
+  const isValidUrl = (url) => {
+    try {
+      new URL(normalizeUrl(url));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Debounced alias existence check with 1 second delay
+  const checkAliasExistence = useCallback(
+    debounce(async (aliases) => {
+      // Filter out empty aliases and join with '/'
+      const validAliases = aliases.filter(a => a.length >= 3);
+      if (validAliases.length === 0) {
+        setAliasStatus(null);
+        return;
+      }
+
+      const compoundAlias = validAliases.join('/');
+      setAliasCheckLoading(true);
+
+      try {
+        const response = await fetch(`http://www.getmyuri.com/api/links/exists?aliasPath=${compoundAlias}`);
+        if (!response.ok) throw new Error('Failed to check alias');
+        const exists = await response.json();
+        
+        setAliasStatus({
+          exists,
+          message: exists 
+            ? `The alias "${compoundAlias}" is already taken` 
+            : `The alias "${compoundAlias}" is available`
+        });
+      } catch (err) {
+        console.error('Error checking alias:', err);
+        setAliasStatus(null);
+      } finally {
+        setAliasCheckLoading(false);
+      }
+    }, 1000), // 1 second debounce
+    []
+  );
 
   const validateExpirationDateTime = (date, hour, minute, ampm) => {
     if (!date) return '';
@@ -309,6 +420,10 @@ function CustomizeLink() {
     newAliases[index] = value;
     setAliases(newAliases);
     setError(validationError);
+
+    if (!validationError) {
+      checkAliasExistence(newAliases);
+    }
   };
 
   const addAlias = () => {
@@ -327,6 +442,11 @@ function CustomizeLink() {
       const newAliases = aliases.filter((_, i) => i !== index);
       setAliases(newAliases);
       setError('');
+      
+      // Recheck remaining aliases
+      if (newAliases.some(a => a.length >= 3)) {
+        checkAliasExistence(newAliases);
+      }
     }
   };
 
@@ -368,89 +488,137 @@ function CustomizeLink() {
     }
   };
 
-  const validateUrl = (url) => {
-    // If URL starts with www. or doesn't have a protocol, add https://
-    let urlToCheck = url;
-    if (url.startsWith('www.')) {
-      urlToCheck = 'https://' + url;
-    } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      urlToCheck = 'https://' + url;
+  // Function to reset form to initial state
+  const resetForm = () => {
+    setLinkDestination('');
+    setAliases(['']);
+    setPassword('');
+    setStartDate('');
+    setStartHour('12');
+    setStartMinute('00');
+    setStartAmPm('AM');
+    setExpMonths('0');
+    setExpDays('0');
+    setExpHours('0');
+    setExpMinutes('0');
+    setLocation({
+      enabled: false,
+      position: null,
+      radius: 1,
+      unit: 'miles'
+    });
+    setError('');
+    setAliasStatus(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setManualSuccess('');
+    setManualError('');
+    setGeneratedLink(''); // Reset generated link
+    
+    // Only check if URL is not empty
+    if (!linkDestination.trim()) {
+      setManualError('Please enter a destination URL');
+      return;
     }
+
+    // Check if any alias is already taken
+    if (aliasStatus?.exists) {
+      setManualError('One or more aliases are already taken');
+      return;
+    }
+
+    // Build expiresAt string
+    let expiresAt = '';
+    if (expMonths !== '0' && expMonths !== '') expiresAt += `${expMonths}M`;
+    if (expDays !== '0' && expDays !== '') expiresAt += `${expDays}d`;
+    if (expHours !== '0' && expHours !== '') expiresAt += `${expHours}h`;
+    if (expMinutes !== '0' && expMinutes !== '') expiresAt += `${expMinutes}m`;
+    if (expiresAt === '') {
+      expiresAt = '6M';
+    }
+
+    // Get start time in MDT
+    const startTime = getStartTimeMDT();
+
+    // Combine all valid aliases
+    const validAliases = aliases.filter(a => a && a.trim().length >= 3);
+    if (validAliases.length === 0) {
+      setManualError('Please enter at least one valid alias (minimum 3 characters)');
+      return;
+    }
+    const combinedAlias = validAliases.join('/');
+    
+    // Location (optional)
+    let locationObj = undefined;
+    let radiusMeters = undefined;
+    if (location.enabled && location.position) {
+      locationObj = {
+        type: 'Point',
+        coordinates: [location.position[1], location.position[0]] // [lng, lat]
+      };
+      radiusMeters = location.unit === 'miles' ? location.radius * 1609.34 : location.radius;
+    }
+
+    // Normalize URL only if no protocol exists
+    const normalizedUrl = normalizeUrl(linkDestination.trim());
+
+    // Build payload with the normalized URL
+    const payload = {
+      alias: combinedAlias,
+      link: normalizedUrl,
+      username: 'admin',
+      location: locationObj,
+      radius: radiusMeters,
+      startTime,
+      expiresAt,
+    };
+    if (password) payload.password = password;
+
+    // Remove undefined fields
+    Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
 
     try {
-      const urlObj = new URL(urlToCheck);
-      return {
-        isValid: true,
-        normalizedUrl: urlToCheck
-      };
-    } catch {
-      return {
-        isValid: false,
-        normalizedUrl: url
-      };
+      const response = await fetch('http://www.getmyuri.com/api/links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to create link');
+      
+      // Set the generated link with combined alias
+      const generatedUrl = `http://www.getmyuri.com/r/${combinedAlias}`;
+      setGeneratedLink(generatedUrl);
+      
+      setManualSuccess('Link created successfully!');
+      toast.success('Link created successfully!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+
+      // Reset form after successful link generation
+      resetForm();
+    } catch (err) {
+      setManualError('Failed to create link. Please try again.');
+      toast.error('Failed to create link. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     }
-  };
-
-  const handleLinkDestinationChange = (value) => {
-    const { isValid, normalizedUrl } = validateUrl(value);
-    if (value && !isValid) {
-      setLinkError('Please enter a valid URL (e.g., www.example.com or https://example.com)');
-      setLinkDestination(value);
-    } else {
-      setLinkError('');
-      setLinkDestination(normalizedUrl);
-    }
-  };
-
-  const handleExpirationDateChange = (value) => {
-    setExpirationDate(value);
-    const error = validateExpirationDateTime(value, expirationHour, expirationMinute, expirationAmPm);
-    setExpirationError(error);
-  };
-
-  const handleExpirationTimeChange = (type, value) => {
-    switch (type) {
-      case 'hour':
-        setExpirationHour(value);
-        break;
-      case 'minute':
-        setExpirationMinute(value);
-        break;
-      case 'ampm':
-        setExpirationAmPm(value);
-        break;
-      default:
-        return;
-    }
-    
-    const error = validateExpirationDateTime(expirationDate, 
-      type === 'hour' ? value : expirationHour,
-      type === 'minute' ? value : expirationMinute,
-      type === 'ampm' ? value : expirationAmPm
-    );
-    setExpirationError(error);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission
   };
 
   // Manual mode helpers
-  const normalizeUrl = (url) => {
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      return 'https://' + url;
-    }
-    return url;
-  };
-  const isValidUrl = (url) => {
-    try {
-      new URL(normalizeUrl(url));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
   const handleManualGenerateLink = async (e) => {
     e.preventDefault();
     setManualUrlError('');
@@ -539,18 +707,16 @@ function CustomizeLink() {
                 <div className="form-group">
                   <label>Link Destination</label>
                   <input
-                    type="url"
+                    type="text"
                     value={linkDestination}
-                    onChange={(e) => handleLinkDestinationChange(e.target.value)}
-                    placeholder="Enter URL (e.g., https://example.com)"
+                    onChange={(e) => setLinkDestination(e.target.value)}
+                    placeholder="Enter URL"
                     required
-                    className={linkError ? 'error-input' : ''}
                   />
-                  {linkError && <div className="error-message">{linkError}</div>}
                 </div>
 
                 <div className="form-group">
-                  <label>Custom Alias</label>
+                  <label>Custom Alias (optional)</label>
                   <div className="alias-container">
                     <div className="base-url">
                       <input
@@ -567,7 +733,7 @@ function CustomizeLink() {
                           value={alias}
                           onChange={(e) => handleAliasChange(e.target.value, index)}
                           placeholder="Enter alias (min. 3 characters)"
-                          className="alias-input"
+                          className={`alias-input ${aliasStatus?.exists ? 'error-input' : ''}`}
                         />
                         {index === aliases.length - 1 ? (
                           <button
@@ -589,6 +755,17 @@ function CustomizeLink() {
                         )}
                       </div>
                     ))}
+                    <div className="alias-status-container">
+                      {aliasCheckLoading ? (
+                        <span className="alias-loading">Checking availability...</span>
+                      ) : (
+                        aliasStatus && (
+                          <span className={`alias-status ${aliasStatus.exists ? 'error-message' : 'success-message'}`}>
+                            {aliasStatus.message}
+                          </span>
+                        )
+                      )}
+                    </div>
                   </div>
                   {error && <div className="error-message">{error}</div>}
                 </div>
@@ -604,56 +781,87 @@ function CustomizeLink() {
                 </div>
 
                 <div className="form-group">
-                  <label>Expiration (MST)</label>
-                  <div className="expiration-inputs">
+                  <label>Start Time (optional)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                     <input
                       type="date"
-                      value={expirationDate}
-                      onChange={(e) => handleExpirationDateChange(e.target.value)}
-                      min={getMSTDate()}
-                      className={expirationError ? 'error-input' : ''}
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      style={{ width: '150px' }}
                     />
-                    <div className="time-picker">
-                      <div className="clock-face">
-                        <select 
-                          value={expirationHour} 
-                          onChange={(e) => handleExpirationTimeChange('hour', e.target.value)}
-                          className={expirationError ? 'error-input' : ''}
-                        >
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
-                            <option key={hour} value={hour.toString().padStart(2, '0')}>
-                              {hour.toString().padStart(2, '0')}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="time-separator">:</span>
-                        <select 
-                          value={expirationMinute} 
-                          onChange={(e) => handleExpirationTimeChange('minute', e.target.value)}
-                          className={expirationError ? 'error-input' : ''}
-                        >
-                          {Array.from({ length: 60 }, (_, i) => i).map(minute => (
-                            <option key={minute} value={minute.toString().padStart(2, '0')}>
-                              {minute.toString().padStart(2, '0')}
-                            </option>
-                          ))}
-                        </select>
-                        <select 
-                          value={expirationAmPm} 
-                          onChange={(e) => handleExpirationTimeChange('ampm', e.target.value)}
-                          className={expirationError ? 'error-input' : ''}
-                        >
-                          <option value="AM">AM</option>
-                          <option value="PM">PM</option>
-                        </select>
-                      </div>
-                    </div>
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={startHour}
+                      onChange={(e) => setStartHour(e.target.value)}
+                      style={{ width: '60px' }}
+                    />
+                    <span>:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={startMinute}
+                      onChange={(e) => setStartMinute(e.target.value.padStart(2, '0'))}
+                      style={{ width: '60px' }}
+                    />
+                    <select
+                      value={startAmPm}
+                      onChange={(e) => setStartAmPm(e.target.value)}
+                      style={{ width: '70px' }}
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                    <span style={{ marginLeft: '10px' }}>(MDT)</span>
                   </div>
-                  {expirationError && <div className="error-message">{expirationError}</div>}
                 </div>
 
                 <div className="form-group">
-                  <label>Location Restriction</label>
+                  <label>Expiration (optional)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <input
+                      type="number"
+                      min="0"
+                      value={expMonths}
+                      onChange={e => setExpMonths(e.target.value)}
+                      placeholder="Months"
+                      style={{ width: '80px' }}
+                    />
+                    <span>months</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={expDays}
+                      onChange={e => setExpDays(e.target.value)}
+                      placeholder="Days"
+                      style={{ width: '80px' }}
+                    />
+                    <span>days</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={expHours}
+                      onChange={e => setExpHours(e.target.value)}
+                      placeholder="Hours"
+                      style={{ width: '80px' }}
+                    />
+                    <span>hours</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={expMinutes}
+                      onChange={e => setExpMinutes(e.target.value)}
+                      placeholder="Minutes"
+                      style={{ width: '80px' }}
+                    />
+                    <span>minutes</span>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Location Restriction (optional)</label>
                   {location.enabled ? (
                     <div className="location-info">
                       <p>Location: {location.position[0].toFixed(6)}°, {location.position[1].toFixed(6)}°</p>
@@ -681,10 +889,32 @@ function CustomizeLink() {
                   )}
                 </div>
 
+                {manualError && <div className="error-message">{manualError}</div>}
+                {manualSuccess && <div className="success-message">{manualSuccess}</div>}
+
+                {generatedLink && (
+                  <div className="generated-link-container">
+                    <div className="generated-link-box">
+                      <span className="generated-link">{generatedLink}</span>
+                      <button 
+                        type="button"
+                        className="copy-btn" 
+                        onClick={handleCopyGeneratedLink}
+                        aria-label="Copy URL"
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                          <rect x="5" y="5" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <button 
                   type="submit" 
                   className="generate-btn"
-                  disabled={!!linkError || !linkDestination || !!expirationError}
+                  disabled={!linkDestination.trim() || !aliases[0] || aliases[0].length < 3 || aliasStatus?.exists}
                 >
                   Generate Link
                 </button>

@@ -11,6 +11,7 @@ import { FaCopy, FaEllipsisV, FaEye, FaPencilAlt, FaTrash } from 'react-icons/fa
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { debounce } from 'lodash';
+import { copyToClipboard } from '../utils/clipboard';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -86,9 +87,32 @@ function StatsPanel() {
     fetchStats();
   }, []);
 
-  const handleCopy = (alias) => {
+  const handleCopy = async (alias) => {
     const url = `http://www.getmyuri.com/r/${alias}`;
-    copyToClipboard(url);
+    const success = await copyToClipboard(url);
+    if (success) {
+      toast.success('Link copied to clipboard!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    } else {
+      toast.error('Failed to copy link', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    }
   };
 
   const handleView = (alias) => {
@@ -248,8 +272,31 @@ function CustomizeLink() {
   };
 
   // Function to handle copying the generated link
-  const handleCopyGeneratedLink = () => {
-    copyToClipboard(generatedLink);
+  const handleCopyGeneratedLink = async () => {
+    const success = await copyToClipboard(generatedLink);
+    if (success) {
+      toast.success('Link copied to clipboard!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    } else {
+      toast.error('Failed to copy link', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    }
   };
 
   // Function to normalize URL only if no protocol exists
@@ -639,27 +686,9 @@ function CustomizeLink() {
       setManualIsLoading(false);
     }
   };
-  const handleManualCopy = () => {
-    copyToClipboard(manualShortUrl);
-  };
-
-  const copyToClipboard = async (text) => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        // Fallback for browsers that don't support clipboard API
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        textArea.remove();
-      }
+  const handleManualCopy = async () => {
+    const success = await copyToClipboard(manualShortUrl);
+    if (success) {
       toast.success('Link copied to clipboard!', {
         position: "top-right",
         autoClose: 3000,
@@ -670,8 +699,7 @@ function CustomizeLink() {
         progress: undefined,
         theme: "light",
       });
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
+    } else {
       toast.error('Failed to copy link', {
         position: "top-right",
         autoClose: 3000,
@@ -684,6 +712,8 @@ function CustomizeLink() {
       });
     }
   };
+
+  const [copied, setCopied] = useState(false);
 
   return (
     <div className="app-container">

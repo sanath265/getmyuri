@@ -88,16 +88,7 @@ function StatsPanel() {
 
   const handleCopy = (alias) => {
     const url = `http://www.getmyuri.com/r/${alias}`;
-    navigator.clipboard.writeText(url);
-    toast.success('Link copied to clipboard!', {
-      position: 'top-right',
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
+    copyToClipboard(url);
   };
 
   const handleView = (alias) => {
@@ -258,21 +249,16 @@ function CustomizeLink() {
 
   // Function to handle copying the generated link
   const handleCopyGeneratedLink = () => {
-    navigator.clipboard.writeText(generatedLink);
-    toast.success('Link copied to clipboard!', {
-      position: 'top-right',
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
+    copyToClipboard(generatedLink);
   };
 
   // Function to normalize URL only if no protocol exists
   const normalizeUrl = (url) => {
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    if (!url) return 'http://';
+    if (url.startsWith('https://')) {
+      return 'http://' + url.substring(8);
+    }
+    if (!url.startsWith('http://')) {
       return 'http://' + url;
     }
     return url;
@@ -654,16 +640,49 @@ function CustomizeLink() {
     }
   };
   const handleManualCopy = () => {
-    navigator.clipboard.writeText(manualShortUrl);
-    toast.success('Link copied to clipboard!', {
-      position: 'top-right',
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
+    copyToClipboard(manualShortUrl);
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for browsers that don't support clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
+      toast.success('Link copied to clipboard!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      toast.error('Failed to copy link', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    }
   };
 
   return (

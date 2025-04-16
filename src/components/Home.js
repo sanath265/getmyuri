@@ -20,6 +20,7 @@ function Home() {
   const [submitStatus, setSubmitStatus] = useState('');
   const [shortUrl, setShortUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const slides = [
     {
@@ -60,8 +61,12 @@ function Home() {
 
   // Helper to normalize URL
   const normalizeUrl = (url) => {
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      return 'https://' + url;
+    if (!url) return 'http://';
+    if (url.startsWith('https://')) {
+      return 'http://' + url.substring(8);
+    }
+    if (!url.startsWith('http://')) {
+      return 'http://' + url;
     }
     return url;
   };
@@ -117,8 +122,32 @@ function Home() {
     }
   };
 
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for browsers that don't support clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(shortUrl);
+    copyToClipboard(shortUrl);
     toast.success('Link copied to clipboard!', {
       position: "top-right",
       autoClose: 3000,

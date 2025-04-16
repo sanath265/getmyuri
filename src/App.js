@@ -9,6 +9,7 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import CustomizeLink from './components/CustomizeLink';
 import Contact from './components/Contact';
+import Auth from './components/Auth';
 import './App.css';
 
 function AppRoutes() {
@@ -21,6 +22,7 @@ function AppRoutes() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/customize" element={<CustomizeLink />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/auth" element={<Auth />} />
     </Routes>
   );
 }

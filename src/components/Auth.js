@@ -7,6 +7,7 @@ function Auth() {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [manualSuccess, setManualSuccess] = useState('');
   const [queryParams, setQueryParams] = useState({
     aliasPath: '',
     password_required: false,
@@ -84,15 +85,37 @@ function Auth() {
       }
 
       // Make the API call
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'include' // Include cookies if needed
+      });
+      
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to authenticate');
       }
 
-      // If successful, redirect to the URL
-      window.location.href = data.redirectUrl || url;
+      // Handle the redirect URL
+      const redirectUrl = data.redirectUrl || url;
+      
+      // For external URLs, use a server-side redirect or open in new tab
+      if (redirectUrl.startsWith('http') || redirectUrl.startsWith('https')) {
+        // Option 1: Open in new tab
+        window.open(redirectUrl, '_blank');
+        
+        // Option 2: Replace current window location
+        // window.location.replace(redirectUrl);
+        
+        // Show success message in current window
+        setManualSuccess('Link opened in new tab');
+      } else {
+        // For internal URLs, use normal navigation
+        window.location.href = redirectUrl;
+      }
     } catch (err) {
       setError(err.message || 'Authentication failed. Please try again.');
     } finally {
@@ -137,6 +160,7 @@ function Auth() {
           )}
 
           {error && <div className="error-message">{error}</div>}
+          {manualSuccess && <div className="success-message">{manualSuccess}</div>}
 
           <button
             type="submit"

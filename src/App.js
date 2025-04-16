@@ -23,14 +23,19 @@ function AppRoutes() {
       <Route path="/customize" element={<CustomizeLink />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/auth" element={<Auth />} />
+      {/* Catch-all route for GitHub Pages 404 redirect */}
+      <Route path="*" element={<Auth />} />
     </Routes>
   );
 }
 
 function App() {
+  // Get the basename from the environment or use default for GitHub Pages
+  const basename = process.env.PUBLIC_URL || '';
+
   return (
     <AuthProvider>
-      <Router>
+      <Router basename={basename}>
         <div className="App">
           <ToastContainer />
           <AppRoutes />

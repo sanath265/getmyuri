@@ -1,121 +1,80 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+// src/components/Auth.js
+import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import '../styles/auth.css';
 
-function Auth() {
-  const [password, setPassword] = useState('');
-  const [location, setLocation] = useState(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [manualSuccess, setManualSuccess] = useState('');
-  const [queryParams, setQueryParams] = useState({
-    aliasPath: '',
-    password_required: false,
-    location_required: false
-  });
+export default function Auth() {
+  const [password, setPassword]       = useState('');
+  const [coords, setCoords]           = useState(null);
+  const [error, setError]             = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [successMessage, setSuccess]  = useState('');
 
-  // eslint-disable-next-line no-unused-vars
-  const navigate = useNavigate();
-  const locationHook = useLocation();
+  const [searchParams] = useSearchParams();
+  const navigate        = useNavigate();
 
-  useEffect(() => {
-    // Parse URL parameters
-    const params = new URLSearchParams(locationHook.search);
-    setQueryParams({
-      aliasPath: params.get('aliasPath') || '',
-      password_required: params.get('password_required') === 'true',
-      location_required: params.get('location_required') === 'true'
-    });
-  }, [locationHook]);
+  const aliasPath        = searchParams.get('aliasPath')         || '';
+  const passwordRequired = searchParams.get('password_required') === 'true';
+  const locationRequired = searchParams.get('location_required') === 'true';
 
-  const getLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setLocation({ latitude, longitude });
-            resolve({ latitude, longitude });
-          },
-          (error) => {
-            setError('Failed to get location. Please enable location access.');
-            reject(error);
-          }
-        );
-      } else {
-        setError('Geolocation is not supported by your browser');
-        reject(new Error('Geolocation not supported'));
+  const fetchLocation = () =>
+    new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        return reject(new Error('Geolocation not supported'));
       }
+      navigator.geolocation.getCurrentPosition(
+        ({ coords: { latitude, longitude } }) => {
+          setCoords({ latitude, longitude });
+          resolve({ latitude, longitude });
+        },
+        err => reject(err),
+      );
     });
-  };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
-      // Build the URL with parameters
-      let url = `https://www.getmyuri.com/r/${queryParams.aliasPath}`;
+      // 1. If location is required but not yet fetched, get it now
+      if (locationRequired && !coords) {
+        await fetchLocation().catch(err => {
+          throw new Error('Unable to get location. Please allow access.');
+        });
+      }
+
+      // 2. Build query string
       const params = new URLSearchParams();
-
-      // Add password if required
-      if (queryParams.password_required && password) {
-        params.append('passcode', password);
+      if (passwordRequired) params.set('passcode', password);
+      if (locationRequired && coords) {
+        params.set('lat',  coords.latitude.toString());
+        params.set('long', coords.longitude.toString());
       }
 
-      // Get location if required
-      if (queryParams.location_required && !location) {
-        try {
-          const coords = await getLocation();
-          params.append('lat', coords.latitude.toString());
-          params.append('long', coords.longitude.toString());
-        } catch (error) {
-          setLoading(false);
-          return; // Error message already set by getLocation
-        }
-      } else if (location) {
-        params.append('lat', location.latitude.toString());
-        params.append('long', location.longitude.toString());
-      }
-
-      // Add parameters to URL if any exist
-      const paramString = params.toString();
-      if (paramString) {
-        url += '?' + paramString;
-      }
-
-      // Make the API call
-      const response = await fetch(url, {
+      // 3. Call your auth endpoint
+      const apiUrl = `https://www.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
+      const res    = await fetch(apiUrl, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        credentials: 'include' // Include cookies if needed
+        headers: { Accept: 'application/json' },
+        credentials: 'include',
       });
-      
-      const data = await response.json();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Authentication failed');
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to authenticate');
-      }
-
-      // Handle the redirect URL
-      const redirectUrl = data.redirectUrl || url;
-      
-      // For external URLs, ensure HTTPS if possible
-      if (redirectUrl.startsWith('http://')) {
-        // Try to upgrade to HTTPS
-        const httpsUrl = redirectUrl.replace('http://', 'https://');
-        window.open(httpsUrl, '_blank');
+      // 4. Redirect (internal vs external)
+      const redirectUrl = data.redirectUrl || apiUrl;
+      const isExternal  = /^https?:\/\//.test(redirectUrl);
+      if (isExternal) {
+        window.open(redirectUrl.replace(/^http:\/\//, 'https://'), '_blank');
       } else {
-        window.open(redirectUrl, '_blank');
+        navigate(redirectUrl, { replace: true });
       }
-      
-      // Show success message in current window
-      setManualSuccess('Link opened in new tab');
+
+      setSuccess('Link opened successfully.');
     } catch (err) {
-      setError(err.message || 'Authentication failed. Please try again.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -126,53 +85,50 @@ function Auth() {
       <div className="auth-box">
         <h2>Authentication Required</h2>
         <form onSubmit={handleSubmit}>
-          {queryParams.password_required && (
+          {passwordRequired && (
             <div className="form-group">
               <label>Password</label>
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 placeholder="Enter password"
                 required
               />
             </div>
           )}
 
-          {queryParams.location_required && !location && (
+          {locationRequired && !coords && (
             <div className="form-group">
               <button
                 type="button"
                 className="location-btn"
-                onClick={getLocation}
+                onClick={() => fetchLocation().catch(err => setError(err.message))}
+                disabled={loading}
               >
-                Allow Location Access
+                {loading ? 'Please wait…' : 'Allow Location Access'}
               </button>
             </div>
           )}
 
-          {location && (
-            <div className="location-info">
-              Location access granted ✓
-            </div>
-          )}
+          {coords && <div className="location-info">Location access granted ✓</div>}
 
-          {error && <div className="error-message">{error}</div>}
-          {manualSuccess && <div className="success-message">{manualSuccess}</div>}
+          {error   && <div className="error-message">{error}</div>}
+          {successMessage && <div className="success-message">{successMessage}</div>}
 
           <button
             type="submit"
             className="submit-btn"
-            disabled={loading || 
-              (queryParams.password_required && !password) || 
-              (queryParams.location_required && !location)}
+            disabled={
+              loading ||
+              (passwordRequired && !password) ||
+              (locationRequired && !coords)
+            }
           >
-            {loading ? 'Verifying...' : 'Continue'}
+            {loading ? 'Verifying…' : 'Continue'}
           </button>
         </form>
       </div>
     </div>
   );
 }
-
-export default Auth; 

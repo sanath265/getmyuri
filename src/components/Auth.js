@@ -71,33 +71,13 @@ export default function Auth() {
         params.set('long', coords.long.toString());
       }
 
-      // 3. Call your auth endpoint
-      const apiUrl = `http://www.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
-      console.log('API URL:', apiUrl);
+      // 3. Build the redirect URL and redirect
+      const redirectUrl = `http://www.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
+      console.log('Redirecting to:', redirectUrl);
       
-      const res = await fetch(apiUrl, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        credentials: 'include',
-      });
+      // Directly redirect to the URL
+      window.location.href = redirectUrl;
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Authentication failed');
-      }
-
-      // 4. Redirect (internal vs external)
-      const data = await res.json();
-      const redirectUrl = data.redirectUrl || apiUrl;
-      const isExternal  = /^https?:\/\//.test(redirectUrl);
-      
-      if (isExternal) {
-        window.location.href = redirectUrl;
-      } else {
-        navigate(redirectUrl, { replace: true });
-      }
-
-      setSuccess('Link opened successfully.');
     } catch (err) {
       console.error('Error:', err);
       setError(err.message);

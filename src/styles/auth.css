@@ -20,6 +20,8 @@
   margin: 0 0 1.5rem;
   color: #333;
   text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .form-group {
@@ -39,6 +41,7 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
+  transition: all 0.2s ease;
 }
 
 .form-group input:focus {
@@ -63,6 +66,11 @@
   background-color: #e9ecef;
 }
 
+.location-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .location-info {
   padding: 0.75rem;
   background-color: #e8f5e9;
@@ -70,6 +78,7 @@
   color: #2e7d32;
   margin-bottom: 1.5rem;
   text-align: center;
+  font-size: 0.9rem;
 }
 
 .error-message {
@@ -79,6 +88,7 @@
   color: #c62828;
   margin-bottom: 1.5rem;
   text-align: center;
+  font-size: 0.9rem;
 }
 
 .success-message {
@@ -88,6 +98,7 @@
   color: #2e7d32;
   margin-bottom: 1.5rem;
   text-align: center;
+  font-size: 0.9rem;
 }
 
 .submit-btn {
@@ -112,8 +123,87 @@
   cursor: not-allowed;
 }
 
+/* Loading state styles */
+.submit-btn.loading {
+  position: relative;
+  color: transparent;
+}
+
+.submit-btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  margin: -10px 0 0 -10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: button-loading-spinner 0.6s linear infinite;
+}
+
+@keyframes button-loading-spinner {
+  from {
+    transform: rotate(0turn);
+  }
+  to {
+    transform: rotate(1turn);
+  }
+}
+
 @media (max-width: 480px) {
   .auth-box {
     padding: 1.5rem;
   }
+  
+  .auth-box h2 {
+    font-size: 1.25rem;
+  }
+}
+
+.location-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.location-details {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.location-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-location-btn,
+.delete-location-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-location-btn {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.edit-location-btn:hover {
+  background-color: #bbdefb;
+}
+
+.delete-location-btn {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.delete-location-btn:hover {
+  background-color: #ffcdd2;
 } 

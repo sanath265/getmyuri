@@ -223,16 +223,10 @@ function CustomizeLink() {
   const [expirationError, setExpirationError] = useState('');
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
-  const [location, setLocation] = useState({
-    enabled: false,
-    position: null,
-    radius: 1,
-    unit: 'miles'
-  });
-  const [error, setError] = useState('');
-  const [showLocationPermission, setShowLocationPermission] = useState(false);
-  const [locationPermissionStatus, setLocationPermissionStatus] = useState('prompt');
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [location, setLocation] = useState(null);
+  const [locationError, setLocationError] = useState('');
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [showLocationControls, setShowLocationControls] = useState(false);
 
   // Expiration fields for manual (advanced) mode
   const [expMonths, setExpMonths] = useState('0');
@@ -423,10 +417,12 @@ function CustomizeLink() {
     // Check location permission status
     if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions.query({ name: 'geolocation' })
-        .then(result => {
-          setLocationPermissionStatus(result.state);
-          result.onchange = () => {
-            setLocationPermissionStatus(result.state);
+        .then(permissionStatus => {
+          if (permissionStatus.state === 'granted') {
+            setShowLocationControls(true);
+          }
+          permissionStatus.onchange = () => {
+            setShowLocationControls(permissionStatus.state === 'granted');
           };
         });
     }
@@ -484,42 +480,39 @@ function CustomizeLink() {
     }
   };
 
-  const handleLocationToggle = () => {
-    if (locationPermissionStatus === 'denied') {
-      alert('Please enable location access in your browser settings to use this feature.');
-      return;
-    }
-
-    setIsLoadingLocation(true);
-    if (!userLocation && locationPermissionStatus === 'prompt') {
-      setShowLocationPermission(true);
-    } else {
-      handleGetUserLocation();
+  const handleLocationClick = async () => {
+    setIsLocationLoading(true);
+    setLocationError('');
+    
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        });
+      });
+      
+      setLocation({
+        lat: position.coords.latitude,
+        long: position.coords.longitude
+      });
+      setShowLocationControls(true);
+    } catch (error) {
+      setLocationError('Failed to get location. Please enable location access in your browser settings.');
+    } finally {
+      setIsLocationLoading(false);
     }
   };
 
-  const handleGetUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation([latitude, longitude]);
-          setLocation(prev => ({
-            ...prev,
-            position: [latitude, longitude]
-          }));
-          setShowLocationPermission(false);
-          setShowLocationModal(true);
-          setIsLoadingLocation(false);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setShowLocationPermission(false);
-          setShowLocationModal(true);
-          setIsLoadingLocation(false);
-        }
-      );
-    }
+  const handleDeleteLocation = () => {
+    setLocation(null);
+    setShowLocationControls(false);
+  };
+
+  const handleEditLocation = () => {
+    setShowLocationControls(false);
+    handleLocationClick();
   };
 
   // Function to reset form to initial state
@@ -535,12 +528,7 @@ function CustomizeLink() {
     setExpDays('0');
     setExpHours('0');
     setExpMinutes('0');
-    setLocation({
-      enabled: false,
-      position: null,
-      radius: 1,
-      unit: 'miles'
-    });
+    setLocation(null);
     setError('');
     setAliasStatus(null);
   };
@@ -587,12 +575,12 @@ function CustomizeLink() {
     // Location (optional)
     let locationObj = undefined;
     let radiusMeters = undefined;
-    if (location.enabled && location.position) {
+    if (location) {
       locationObj = {
         type: 'Point',
-        coordinates: [location.position[1], location.position[0]] // [lng, lat]
+        coordinates: [location.long, location.lat] // [lng, lat]
       };
-      radiusMeters = location.unit === 'miles' ? location.radius * 1609.34 : location.radius;
+      radiusMeters = 'miles';
     }
 
     // Normalize URL only if no protocol exists
@@ -911,32 +899,45 @@ function CustomizeLink() {
                 </div>
 
                 <div className="form-group">
-                  <label>Location Restriction (optional)</label>
-                  {location.enabled ? (
-                    <div className="location-info">
-                      <p>Location: {location.position[0].toFixed(6)}°, {location.position[1].toFixed(6)}°</p>
-                      <p>Radius: {location.radius} {location.unit}</p>
-                      <button
-                        type="button"
-                        className="edit-location-btn"
-                        onClick={() => setShowLocationModal(true)}
-                      >
-                        Edit Location
-                      </button>
-                    </div>
-                  ) : (
+                  <label>Location Access</label>
+                  {!showLocationControls ? (
                     <button
                       type="button"
                       className="location-btn"
-                      onClick={handleLocationToggle}
-                      disabled={isLoadingLocation}
+                      onClick={handleLocationClick}
+                      disabled={isLocationLoading}
                     >
-                      <div className="button-content">
-                        {isLoadingLocation && <div className="loader" />}
-                        <span>{isLoadingLocation ? 'Getting Location...' : 'Set Location'}</span>
-                      </div>
+                      {isLocationLoading ? 'Getting Location...' : 'Allow Location Access'}
                     </button>
+                  ) : (
+                    <div className="location-controls">
+                      <div className="location-info">
+                        Location access granted
+                        {location && (
+                          <div className="location-details">
+                            Lat: {location.lat.toFixed(6)}, Long: {location.long.toFixed(6)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="location-actions">
+                        <button
+                          type="button"
+                          className="edit-location-btn"
+                          onClick={handleEditLocation}
+                        >
+                          Edit Location
+                        </button>
+                        <button
+                          type="button"
+                          className="delete-location-btn"
+                          onClick={handleDeleteLocation}
+                        >
+                          Delete Location
+                        </button>
+                      </div>
+                    </div>
                   )}
+                  {locationError && <div className="error-message">{locationError}</div>}
                 </div>
 
                 {manualError && <div className="error-message">{manualError}</div>}
@@ -1007,93 +1008,6 @@ function CustomizeLink() {
         </div>
         {mode === 'manual' && <StatsPanel />}
       </div>
-
-      {showLocationPermission && locationPermissionStatus === 'prompt' && (
-        <div className="location-modal">
-          <div className="modal-content">
-            <h3>Location Access</h3>
-            <p>We need your permission to access your location. This will help us set the center point for the restricted area.</p>
-            <div className="modal-buttons">
-              <button onClick={handleGetUserLocation} className="save-btn">
-                Allow Location Access
-              </button>
-              <button onClick={() => {
-                setShowLocationPermission(false);
-                setShowLocationModal(true);
-              }} className="cancel-btn">
-                Skip
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showLocationModal && (
-        <div className="location-modal">
-          <div className="modal-content map-modal">
-            <h3>Set Location Restrictions</h3>
-            <div className="map-container">
-              <MapContainer
-                center={location.position || userLocation || [0, 0]}
-                zoom={13}
-                style={{ height: '300px', width: '100%' }}
-              >
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                />
-                <MapComponent 
-                  location={location}
-                  userLocation={userLocation}
-                  setLocation={setLocation}
-                />
-              </MapContainer>
-            </div>
-            <div className="radius-control">
-              <label>Radius: {location.radius} {location.unit}</label>
-              <input
-                type="range"
-                min="0.1"
-                max={location.unit === 'miles' ? "50" : "5280"}
-                step="0.1"
-                value={location.radius}
-                onChange={(e) => setLocation(prev => ({
-                  ...prev,
-                  radius: parseFloat(e.target.value)
-                }))}
-              />
-              <select
-                value={location.unit}
-                onChange={(e) => setLocation(prev => ({
-                  ...prev,
-                  unit: e.target.value,
-                  radius: e.target.value === 'miles' ? 1 : 5280
-                }))}
-              >
-                <option value="miles">Miles</option>
-                <option value="feet">Feet</option>
-              </select>
-            </div>
-            <div className="modal-buttons">
-              <button
-                onClick={() => {
-                  setLocation(prev => ({ ...prev, enabled: true }));
-                  setShowLocationModal(false);
-                }}
-                className="save-btn"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setShowLocationModal(false)}
-                className="cancel-btn"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

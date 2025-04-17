@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- URL Input Container -->
+  <rect x="50" y="80" width="300" height="140" fill="#F3F4F6" rx="8"/>
+  
+  <!-- Original URL -->
+  <rect x="70" y="100" width="260" height="40" fill="white" rx="4" stroke="#E94444" stroke-width="1"/>
+  <text x="80" y="125" fill="#666" font-family="Arial" font-size="14">https://example.com/very/long/url/that/n</text>
+  
+  <!-- Custom Alias Input -->
+  <rect x="70" y="160" width="180" height="40" fill="white" rx="4" stroke="#E94444" stroke-width="1"/>
+  <text x="80" y="185" fill="#666" font-family="Arial" font-size="14">getmyuri.com/r/mybrand</text>
+  
+  <!-- Customization Options -->
+  <rect x="270" y="160" width="60" height="40" fill="#E94444" rx="4"/>
+  <text x="285" y="185" fill="white" font-family="Arial" font-size="14">Save</text>
+  
+  <!-- Customization Tools -->
+  <rect x="70" y="220" width="260" height="40" fill="white" rx="4" stroke="#E94444" stroke-width="1"/>
+  
+  <!-- Tool Icons -->
+  <circle cx="90" cy="240" r="8" fill="#E94444" fill-opacity="0.1"/>
+  <path d="M 85 240 L 95 240 M 90 235 L 90 245" stroke="#E94444" stroke-width="1"/>
+  
+  <circle cx="120" cy="240" r="8" fill="#E94444" fill-opacity="0.1"/>
+  <path d="M 115 240 L 125 240 M 120 235 L 120 245" stroke="#E94444" stroke-width="1"/>
+  
+  <circle cx="150" cy="240" r="8" fill="#E94444" fill-opacity="0.1"/>
+  <path d="M 145 240 L 155 240 M 150 235 L 150 245" stroke="#E94444" stroke-width="1"/>
+  
+  <circle cx="180" cy="240" r="8" fill="#E94444" fill-opacity="0.1"/>
+  <path d="M 175 240 L 185 240 M 180 235 L 180 245" stroke="#E94444" stroke-width="1"/>
+  
+  <circle cx="210" cy="240" r="8" fill="#E94444" fill-opacity="0.1"/>
+  <path d="M 205 240 L 215 240 M 210 235 L 210 245" stroke="#E94444" stroke-width="1"/>
+  
+  <circle cx="240" cy="240" r="8" fill="#E94444" fill-opacity="0.1"/>
+  <path d="M 235 240 L 245 240 M 240 235 L 240 245" stroke="#E94444" stroke-width="1"/>
+  
+  <circle cx="270" cy="240" r="8" fill="#E94444" fill-opacity="0.1"/>
+  <path d="M 265 240 L 275 240 M 270 235 L 270 245" stroke="#E94444" stroke-width="1"/>
+</svg> 

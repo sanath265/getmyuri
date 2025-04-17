@@ -14,6 +14,7 @@ function Auth() {
     location_required: false
   });
 
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const locationHook = useLocation();
 

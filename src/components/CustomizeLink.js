@@ -194,6 +194,7 @@ function StatsPanel() {
 }
 
 function CustomizeLink() {
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { logout } = useAuth();
   // Mode state: 'automatic' or 'manual'

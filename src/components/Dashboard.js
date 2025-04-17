@@ -5,6 +5,7 @@ import Toast from './Toast';
 import { useAuth } from '../context/AuthContext';
 
 function Dashboard() {
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [links] = useState([

@@ -8,6 +8,7 @@ function Login() {
   const [Password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { login } = useAuth();
 

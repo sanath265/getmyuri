@@ -5,6 +5,7 @@ import '../styles/contact.css';
 import { useAuth } from '../context/AuthContext';
 
 function Contact() {
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuth();
   const [firstName, setFirstName] = useState('');

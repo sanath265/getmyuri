@@ -72,7 +72,7 @@ export default function Auth() {
       }
 
       // 3. Call your auth endpoint
-      const apiUrl = `https://app.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
+      const apiUrl = `http://www.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
       console.log('API URL:', apiUrl);
       
       const res = await fetch(apiUrl, {

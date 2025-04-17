@@ -2,16 +2,13 @@
   "name": "getmyuri",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://app.getmyuri.com",
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build --no-history"
-  },
+  "homepage": "https://getmyuri.com",
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^13.5.0",
     "@types/leaflet": "^1.9.17",
     "axios": "^1.8.4",
     "leaflet": "^1.9.4",
@@ -20,16 +17,15 @@
     "react-icons": "^5.5.0",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.22.3",
+    "react-scripts": "5.0.1",
     "react-toastify": "^11.0.5",
     "web-vitals": "^2.1.4"
   },
-  "devDependencies": {
-    "@testing-library/dom": "^8.0.0",
-    "@testing-library/jest-dom": "^6.0.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^14.6.1",
-    "gh-pages": "^6.3.0",
-    "react-scripts": "^5.0.1"
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [

@@ -1,5 +1,5 @@
 // src/components/Auth.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import '../styles/auth.css';
 
@@ -13,9 +13,27 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const navigate        = useNavigate();
 
-  const aliasPath        = searchParams.get('aliasPath')         || '';
+  // Debug URL parameters
+  useEffect(() => {
+    console.log('URL Parameters:', {
+      aliasPath: searchParams.get('aliasPath'),
+      passwordRequired: searchParams.get('password_required'),
+      locationRequired: searchParams.get('location_required')
+    });
+  }, [searchParams]);
+
+  const aliasPath        = searchParams.get('aliasPath') || '';
   const passwordRequired = searchParams.get('password_required') === 'true';
   const locationRequired = searchParams.get('location_required') === 'true';
+
+  useEffect(() => {
+    // If only location is required, fetch it automatically
+    if (locationRequired && !passwordRequired && !coords) {
+      fetchLocation().catch(err => {
+        setError('Please allow location access to continue');
+      });
+    }
+  }, [locationRequired, passwordRequired]);
 
   const fetchLocation = () =>
     new Promise((resolve, reject) => {
@@ -24,8 +42,8 @@ export default function Auth() {
       }
       navigator.geolocation.getCurrentPosition(
         ({ coords: { latitude, longitude } }) => {
-          setCoords({ latitude, longitude });
-          resolve({ latitude, longitude });
+          setCoords({ lat: latitude, long: longitude });
+          resolve({ lat: latitude, long: longitude });
         },
         err => reject(err),
       );
@@ -49,36 +67,55 @@ export default function Auth() {
       const params = new URLSearchParams();
       if (passwordRequired) params.set('passcode', password);
       if (locationRequired && coords) {
-        params.set('lat',  coords.latitude.toString());
-        params.set('long', coords.longitude.toString());
+        params.set('lat',  coords.lat.toString());
+        params.set('long', coords.long.toString());
       }
 
       // 3. Call your auth endpoint
-      const apiUrl = `https://www.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
-      const res    = await fetch(apiUrl, {
+      const apiUrl = `https://app.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
+      console.log('API URL:', apiUrl);
+      
+      const res = await fetch(apiUrl, {
         method: 'GET',
         headers: { Accept: 'application/json' },
         credentials: 'include',
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Authentication failed');
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Authentication failed');
+      }
 
       // 4. Redirect (internal vs external)
+      const data = await res.json();
       const redirectUrl = data.redirectUrl || apiUrl;
       const isExternal  = /^https?:\/\//.test(redirectUrl);
+      
       if (isExternal) {
-        window.open(redirectUrl.replace(/^http:\/\//, 'https://'), '_blank');
+        window.location.href = redirectUrl;
       } else {
         navigate(redirectUrl, { replace: true });
       }
 
       setSuccess('Link opened successfully.');
     } catch (err) {
+      console.error('Error:', err);
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
+
+  // If no parameters are provided, show a message
+  if (!aliasPath) {
+    return (
+      <div className="auth-container">
+        <div className="auth-box">
+          <h2>Invalid Link</h2>
+          <p>This link appears to be invalid or expired.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container">
@@ -113,7 +150,7 @@ export default function Auth() {
 
           {coords && <div className="location-info">Location access granted ✓</div>}
 
-          {error   && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{error}</div>}
           {successMessage && <div className="success-message">{successMessage}</div>}
 
           <button

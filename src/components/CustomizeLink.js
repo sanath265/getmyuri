@@ -227,6 +227,7 @@ function CustomizeLink() {
   const [locationError, setLocationError] = useState('');
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [showLocationControls, setShowLocationControls] = useState(false);
+  const [error, setError] = useState('');
 
   // Expiration fields for manual (advanced) mode
   const [expMonths, setExpMonths] = useState('0');

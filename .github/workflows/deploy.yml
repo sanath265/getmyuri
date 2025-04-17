@@ -26,11 +26,19 @@ jobs:
         env:
           CI: false
 
-      - name: Verify CNAME
+      - name: Verify Build Files
         run: |
-          if [ ! -f "build/CNAME" ]; then
-            cp public/CNAME build/CNAME
+          ls -la build/
+          if [ ! -f "build/index.html" ]; then
+            echo "Error: index.html not found in build directory"
+            exit 1
           fi
+
+      - name: Copy CNAME and .nojekyll
+        run: |
+          cp public/CNAME build/CNAME
+          cp public/.nojekyll build/.nojekyll
+          cp public/404.html build/404.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

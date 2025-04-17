@@ -39,14 +39,13 @@ jobs:
           cp public/CNAME build/CNAME
           cp public/.nojekyll build/.nojekyll
           cp public/404.html build/404.html
-          # Ensure 404.html is properly formatted
-          sed -i 's/\/\?\/\&\/~and~/\/\?p=/g' build/404.html
+          # Create a copy of index.html as 200.html for client-side routing
+          cp build/index.html build/200.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
           publish_dir: ./build
           commit_message: ${{ github.event.head_commit.message }}
           enable_jekyll: false

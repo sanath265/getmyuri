@@ -113,7 +113,7 @@ function Home() {
       }
 
       const data = await response.json();
-      setShortUrl(`https://www.getmyuri.com/r/${data.shortUrl}`);
+      setShortUrl(`https://getmyuri.com/r/${data.shortUrl}`);
       setShowPopup(true);
     } catch (err) {
       setUrlError('Failed to shorten URL. Please try again.');

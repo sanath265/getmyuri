@@ -26,124 +26,115 @@ export default function Auth() {
   const passwordRequired = searchParams.get('password_required') === 'true';
   const locationRequired = searchParams.get('location_required') === 'true';
 
+  // Auto‑request location if only location is required
   useEffect(() => {
-    // If only location is required, fetch it automatically
     if (locationRequired && !passwordRequired && !coords) {
       handleLocationRequest().catch(err => {
         setError('Please allow location access to continue');
       });
     }
-  }, [locationRequired, passwordRequired]);
+  }, [locationRequired, passwordRequired, coords]);
 
   const handleLocationRequest = async () => {
-    try {
-      if (!navigator.geolocation) {
-        throw new Error('Geolocation is not supported by your browser');
-      }
-
-      // First check if we have permission
-      const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-      if (permissionStatus.state === 'denied') {
-        throw new Error('Location access is denied. Please enable it in your browser settings.');
-      }
-
-      // Get location with a single attempt and longer timeout
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          resolve,
-          (error) => {
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                reject(new Error('Location access is denied. Please enable it in your browser settings.'));
-                break;
-              case error.POSITION_UNAVAILABLE:
-                reject(new Error('Location information is unavailable. Please ensure your device\'s location services are enabled.'));
-                break;
-              case error.TIMEOUT:
-                reject(new Error('Location request timed out. Please try again.'));
-                break;
-              default:
-                reject(new Error('An unknown error occurred while getting location.'));
-            }
-          },
-          {
-            enableHighAccuracy: false, // Start with lower accuracy
-            timeout: 30000, // 30 seconds timeout
-            maximumAge: 0
+    if (!navigator.geolocation) {
+      throw new Error('Geolocation is not supported by your browser');
+    }
+    const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+    if (permissionStatus.state === 'denied') {
+      throw new Error('Location access is denied. Please enable it in your browser settings.');
+    }
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          setCoords({ lat: latitude, lon: longitude });
+          resolve({ latitude, longitude });
+        },
+        error => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              reject(new Error('Location access is denied. Please enable it in your browser settings.'));
+              break;
+            case error.POSITION_UNAVAILABLE:
+              reject(new Error('Location information is unavailable. Please enable device location services.'));
+              break;
+            case error.TIMEOUT:
+              reject(new Error('Location request timed out. Please try again.'));
+              break;
+            default:
+              reject(new Error('An unknown error occurred while getting location.'));
           }
-        );
-      });
-
-      if (!position || !position.coords) {
-        throw new Error('Could not get location coordinates. Please try again.');
-      }
-
-      // Set the coordinates in state
-      setCoords({
-        lat: position.coords.latitude,
-        lon: position.coords.longitude
-      });
-
-      return {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      };
-
-    } catch (error) {
-      console.error('Location error:', error);
-      throw error;
-    }
+        },
+        { enableHighAccuracy: false, timeout: 30000, maximumAge: 0 }
+      );
+    });
   };
 
-  const handleLocationBasedAuth = async () => {
-    try {
-      const location = await handleLocationRequest();
-      // Use the location data in your auth flow
-      console.log('Location obtained:', location);
-      // ... rest of your auth logic
-    } catch (error) {
-      console.error('Auth location error:', error);
-      // Handle the error appropriately in your UI
-    }
-  };
-
+  // Main submit handler, now using fetch + manual redirect
   const handleSubmit = async e => {
     e.preventDefault();
-    setError(''); setLoading(true);
-    // … build `authUrl` with passcode/coords …
-    const authUrl = `https://getmyuri.com/r/${aliasPath}?${params.toString()}`;
-  
+    setError('');
+    setLoading(true);
+
+    // 1) Build query params
+    const params = new URLSearchParams();
+    if (passwordRequired) {
+      params.set('passcode', password);
+    }
+    if (locationRequired) {
+      if (!coords) {
+        // ensure we have coords
+        try {
+          await handleLocationRequest();
+        } catch (err) {
+          setError(err.message);
+          setLoading(false);
+          return;
+        }
+      }
+      params.set('lat', coords.lat.toString());
+      params.set('lon', coords.lon.toString());
+    }
+
+    const authUrl = `https://getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
+
     try {
-      // 1) perform a GET via fetch()
+      // 2) Fetch with manual redirect
       const resp = await fetch(authUrl, {
         method: 'GET',
-        mode: 'cors',                   // if cross‐subdomain
-        credentials: 'include',         // if cookies/session needed
-        redirect: 'manual'              // so fetch won’t auto‐follow
+        mode: 'cors',
+        credentials: 'include',
+        redirect: 'manual'
       });
-  
-      if (resp.status === 302) {
-        // 2) grab the Location header and navigate
-        const location = resp.headers.get('Location');
-        window.location.href = location;
+
+      // 3) Handle redirect or success
+      if (resp.status === 302 || resp.status === 301) {
+        const locationHeader = resp.headers.get('Location');
+        if (locationHeader) {
+          window.location.href = locationHeader;
+        } else {
+          throw new Error('Redirect location missing from response.');
+        }
+      } else if (resp.ok) {
+        // fallback: just navigate to authUrl on 200 OK
+        window.location.href = authUrl;
       } else {
         throw new Error('Access denied. Please check your password/location.');
       }
     } catch (err) {
+      console.error('Error during auth fetch:', err);
       setError(err.message);
       setLoading(false);
     }
   };
 
-  // Add useEffect to check for auth errors when component mounts
+  // Show auth‐error messages if redirected back with error=…
   useEffect(() => {
     const lastAuthAttempt = sessionStorage.getItem('lastAuthAttempt');
     if (lastAuthAttempt) {
       sessionStorage.removeItem('lastAuthAttempt');
-      const urlParams = new URLSearchParams(window.location.search);
-      const error = urlParams.get('error');
-      
-      if (error) {
+      const errorParam = new URLSearchParams(window.location.search).get('error');
+      if (errorParam) {
         if (passwordRequired && locationRequired) {
           setError('Either you are outside the permitted location area or the password is incorrect.');
         } else if (passwordRequired) {
@@ -157,7 +148,6 @@ export default function Auth() {
     }
   }, [passwordRequired, locationRequired]);
 
-  // If no parameters are provided, show a message
   if (!aliasPath) {
     return (
       <div className="auth-container">
@@ -221,4 +211,3 @@ export default function Auth() {
     </div>
   );
 }
-

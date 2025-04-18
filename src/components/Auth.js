@@ -35,19 +35,72 @@ export default function Auth() {
     }
   }, [locationRequired, passwordRequired]);
 
-  const fetchLocation = () =>
-    new Promise((resolve, reject) => {
+  const handleLocationRequest = async () => {
+    try {
       if (!navigator.geolocation) {
-        return reject(new Error('Geolocation not supported'));
+        throw new Error('Geolocation is not supported by your browser');
       }
-      navigator.geolocation.getCurrentPosition(
-        ({ coords: { latitude, longitude } }) => {
-          setCoords({ lat: latitude, long: longitude });
-          resolve({ lat: latitude, long: longitude });
-        },
-        err => reject(err),
-      );
-    });
+
+      // First check if we have permission
+      const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+      if (permissionStatus.state === 'denied') {
+        throw new Error('Location access is denied. Please enable it in your browser settings.');
+      }
+
+      // Get location with a single attempt and longer timeout
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          (error) => {
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                reject(new Error('Location access is denied. Please enable it in your browser settings.'));
+                break;
+              case error.POSITION_UNAVAILABLE:
+                reject(new Error('Location information is unavailable. Please ensure your device\'s location services are enabled.'));
+                break;
+              case error.TIMEOUT:
+                reject(new Error('Location request timed out. Please try again.'));
+                break;
+              default:
+                reject(new Error('An unknown error occurred while getting location.'));
+            }
+          },
+          {
+            enableHighAccuracy: false, // Start with lower accuracy
+            timeout: 30000, // 30 seconds timeout
+            maximumAge: 0
+          }
+        );
+      });
+
+      if (!position || !position.coords) {
+        throw new Error('Could not get location coordinates. Please try again.');
+      }
+
+      // Return the coordinates
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      };
+
+    } catch (error) {
+      console.error('Location error:', error);
+      throw error; // Re-throw to handle in the calling function
+    }
+  };
+
+  const handleLocationBasedAuth = async () => {
+    try {
+      const location = await handleLocationRequest();
+      // Use the location data in your auth flow
+      console.log('Location obtained:', location);
+      // ... rest of your auth logic
+    } catch (error) {
+      console.error('Auth location error:', error);
+      // Handle the error appropriately in your UI
+    }
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();

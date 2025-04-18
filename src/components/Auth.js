@@ -129,32 +129,9 @@ export default function Auth() {
         params.set('lon', coords.lon.toString());
       }
 
-      // 3. Build the redirect URL
+      // 3. Redirect to the URL
       const redirectUrl = `https://getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
-      
-      // 4. Try to redirect and handle errors
-      try {
-        const response = await fetch(redirectUrl, { method: 'HEAD' });
-        if (!response.ok) {
-          if (response.status === 401) {
-            if (passwordRequired && locationRequired) {
-              throw new Error('Either you are outside the permitted location area or the password is incorrect.');
-            } else if (passwordRequired) {
-              throw new Error('Incorrect password. Please try again.');
-            } else if (locationRequired) {
-              throw new Error('You are outside the permitted location area. Please check your location.');
-            }
-          }
-          throw new Error('Unauthorized access. Please check your credentials and location.');
-        }
-        // If the HEAD request succeeds, proceed with the redirect
-        window.location.href = redirectUrl;
-      } catch (err) {
-        if (err.message.includes('password') || err.message.includes('location')) {
-          throw err; // Re-throw specific error messages
-        }
-        throw new Error('Failed to verify access. Please try again.');
-      }
+      window.location.href = redirectUrl;
 
     } catch (err) {
       console.error('Error:', err);
@@ -162,6 +139,28 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
+  // Add useEffect to check for auth errors when component mounts
+  useEffect(() => {
+    const lastAuthAttempt = sessionStorage.getItem('lastAuthAttempt');
+    if (lastAuthAttempt) {
+      sessionStorage.removeItem('lastAuthAttempt');
+      const urlParams = new URLSearchParams(window.location.search);
+      const error = urlParams.get('error');
+      
+      if (error) {
+        if (passwordRequired && locationRequired) {
+          setError('Either you are outside the permitted location area or the password is incorrect.');
+        } else if (passwordRequired) {
+          setError('Incorrect password. Please try again.');
+        } else if (locationRequired) {
+          setError('You are outside the permitted location area. Please check your location.');
+        } else {
+          setError('Access denied. Please check your credentials.');
+        }
+      }
+    }
+  }, [passwordRequired, locationRequired]);
 
   // If no parameters are provided, show a message
   if (!aliasPath) {

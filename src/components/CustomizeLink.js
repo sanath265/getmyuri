@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Circle, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -26,16 +26,14 @@ L.Icon.Default.mergeOptions({
   shadowSize: [41, 41]
 });
 
-function MapComponent({ location, userLocation, setLocation }) {
+function MapComponent({ location, setLocation }) {
   const map = useMap();
   
   useEffect(() => {
     if (location.position) {
       map.setView(location.position, 13);
-    } else if (userLocation) {
-      map.setView(userLocation, 13);
     }
-  }, [map, location.position, userLocation]);
+  }, [map, location.position]);
 
   return location.position ? (
     <>
@@ -55,7 +53,7 @@ function MapComponent({ location, userLocation, setLocation }) {
       />
       <Circle
         center={location.position}
-        radius={location.unit === 'miles' ? location.radius * 1609.34 : location.radius * 0.3048}
+        radius={location.unit === 'miles' ? location.radius * 1609.34 : location.radius * 1000}
         pathOptions={{ color: '#E94444' }}
       />
     </>
@@ -194,27 +192,20 @@ function StatsPanel() {
 }
 
 function CustomizeLink() {
-  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { logout } = useAuth();
-  // Mode state: 'automatic' or 'manual'
   const [mode, setMode] = useState('manual');
-
-  // Manual mode states (copied from Home.js logic)
   const [manualUrl, setManualUrl] = useState('');
   const [manualUrlError, setManualUrlError] = useState('');
   const [manualShortUrl, setManualShortUrl] = useState('');
   const [manualIsLoading, setManualIsLoading] = useState(false);
-
-  // Start time states
   const [startDate, setStartDate] = useState('');
   const [startHour, setStartHour] = useState('12');
   const [startMinute, setStartMinute] = useState('00');
   const [startAmPm, setStartAmPm] = useState('AM');
-
   const [linkDestination, setLinkDestination] = useState('');
   const [linkError, setLinkError] = useState('');
-  const [aliases, setAliases] = useState(['']); // Array of aliases
+  const [aliases, setAliases] = useState(['']);
   const [password, setPassword] = useState('');
   const [expirationHour, setExpirationHour] = useState('12');
   const [expirationMinute, setExpirationMinute] = useState('00');
@@ -222,8 +213,11 @@ function CustomizeLink() {
   const [expirationDate, setExpirationDate] = useState('');
   const [expirationError, setExpirationError] = useState('');
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [userLocation, setUserLocation] = useState(null);
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState({
+    position: null,
+    radius: 1,
+    unit: 'miles'
+  });
   const [locationError, setLocationError] = useState('');
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [showLocationControls, setShowLocationControls] = useState(false);
@@ -481,39 +475,115 @@ function CustomizeLink() {
     }
   };
 
+  const checkGeolocationPermission = async () => {
+    try {
+      const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+      return permissionStatus.state;
+    } catch (error) {
+      console.error('Error checking geolocation permission:', error);
+      return 'prompt';
+    }
+  };
+
+  const getLocationWithRetry = async (options, retries = 2) => {
+    return new Promise((resolve, reject) => {
+      const attemptGetLocation = (attempt = 0) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          (error) => {
+            if (error.code === error.TIMEOUT && attempt < retries) {
+              // Retry on timeout
+              attemptGetLocation(attempt + 1);
+            } else {
+              reject(error);
+            }
+          },
+          options
+        );
+      };
+      attemptGetLocation();
+    });
+  };
+
   const handleLocationClick = async () => {
     setIsLocationLoading(true);
     setLocationError('');
     
     try {
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        });
+      if (!navigator.geolocation) {
+        throw new Error('Geolocation is not supported by your browser');
+      }
+
+      // Try with high accuracy first
+      const position = await getLocationWithRetry({
+        enableHighAccuracy: true,
+        timeout: 30000, // 30 seconds
+        maximumAge: 0
+      }).catch(async (error) => {
+        // If high accuracy fails, try with lower accuracy
+        if (error.code === error.POSITION_UNAVAILABLE) {
+          return getLocationWithRetry({
+            enableHighAccuracy: false,
+            timeout: 30000,
+            maximumAge: 0
+          });
+        }
+        throw error;
       });
       
-      setLocation({
-        lat: position.coords.latitude,
-        long: position.coords.longitude
-      });
-      setShowLocationControls(true);
+      if (!position || !position.coords) {
+        throw new Error('Could not get location coordinates. Please try again.');
+      }
+
+      setLocation(prev => ({
+        ...prev,
+        position: [position.coords.latitude, position.coords.longitude]
+      }));
+      setShowLocationModal(true);
     } catch (error) {
-      setLocationError('Failed to get location. Please enable location access in your browser settings.');
+      console.error('Location error:', error);
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          setLocationError('Location access is denied. Please enable it in your browser settings.');
+          break;
+        case error.POSITION_UNAVAILABLE:
+          setLocationError('Location information is unavailable. Please ensure your device\'s location services are enabled and try again.');
+          break;
+        case error.TIMEOUT:
+          setLocationError('Location request timed out after multiple attempts. Please check your internet connection and try again.');
+          break;
+        default:
+          setLocationError('An unknown error occurred while getting location. Please try again.');
+      }
     } finally {
       setIsLocationLoading(false);
     }
   };
 
   const handleDeleteLocation = () => {
-    setLocation(null);
-    setShowLocationControls(false);
+    setLocation(prev => ({
+      ...prev,
+      position: null
+    }));
+    setShowLocationModal(false);
   };
 
   const handleEditLocation = () => {
-    setShowLocationControls(false);
-    handleLocationClick();
+    setShowLocationModal(true);
+  };
+
+  const handleRadiusChange = (e) => {
+    setLocation(prev => ({
+      ...prev,
+      radius: parseFloat(e.target.value)
+    }));
+  };
+
+  const handleUnitChange = (e) => {
+    setLocation(prev => ({
+      ...prev,
+      unit: e.target.value
+    }));
   };
 
   // Function to reset form to initial state
@@ -529,7 +599,11 @@ function CustomizeLink() {
     setExpDays('0');
     setExpHours('0');
     setExpMinutes('0');
-    setLocation(null);
+    setLocation({
+      position: null,
+      radius: 1,
+      unit: 'miles'
+    });
     setError('');
     setAliasStatus(null);
   };
@@ -576,12 +650,13 @@ function CustomizeLink() {
     // Location (optional)
     let locationObj = undefined;
     let radiusMeters = undefined;
-    if (location) {
+    if (location.position) {
       locationObj = {
         type: 'Point',
-        coordinates: [location.long, location.lat] // [lng, lat]
+        coordinates: [location.position[1], location.position[0]] // [lng, lat]
       };
-      radiusMeters = 'miles';
+      // Convert radius to meters
+      radiusMeters = location.unit === 'miles' ? location.radius * 1609.34 : location.radius * 0.3048;
     }
 
     // Normalize URL only if no protocol exists
@@ -901,24 +976,22 @@ function CustomizeLink() {
 
                 <div className="form-group">
                   <label>Location Access</label>
-                  {!showLocationControls ? (
+                  {!location.position ? (
                     <button
                       type="button"
                       className="location-btn"
                       onClick={handleLocationClick}
                       disabled={isLocationLoading}
                     >
-                      {isLocationLoading ? 'Getting Location...' : 'Allow Location Access'}
+                      {isLocationLoading ? 'Getting Location...' : 'Set Location'}
                     </button>
                   ) : (
                     <div className="location-controls">
                       <div className="location-info">
-                        Location access granted
-                        {location && (
-                          <div className="location-details">
-                            Lat: {location.lat.toFixed(6)}, Long: {location.long.toFixed(6)}
-                          </div>
-                        )}
+                        Location set
+                        <div className="location-details">
+                          Lat: {location.position[0].toFixed(6)}, Long: {location.position[1].toFixed(6)}
+                        </div>
                       </div>
                       <div className="location-actions">
                         <button
@@ -940,6 +1013,63 @@ function CustomizeLink() {
                   )}
                   {locationError && <div className="error-message">{locationError}</div>}
                 </div>
+
+                {showLocationModal && (
+                  <div className="location-modal">
+                    <div className="modal-content">
+                      <h3>Set Location</h3>
+                      <div className="map-container">
+                        <MapContainer
+                          center={location.position || [0, 0]}
+                          zoom={13}
+                          style={{ height: '400px', width: '100%' }}
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          <MapComponent location={location} setLocation={setLocation} />
+                        </MapContainer>
+                      </div>
+                      <div className="radius-controls">
+                        <div className="radius-slider-container">
+                          <label>Radius: {location.radius} {location.unit}</label>
+                          <input
+                            type="range"
+                            min="0.1"
+                            max="10"
+                            step="0.1"
+                            value={location.radius}
+                            onChange={handleRadiusChange}
+                            className="radius-slider"
+                          />
+                        </div>
+                        <select
+                          value={location.unit}
+                          onChange={handleUnitChange}
+                          className="unit-select"
+                        >
+                          <option value="miles">Miles</option>
+                          <option value="meters">Meters</option>
+                        </select>
+                      </div>
+                      <div className="modal-buttons">
+                        <button
+                          className="save-btn"
+                          onClick={() => setShowLocationModal(false)}
+                        >
+                          Save Location
+                        </button>
+                        <button
+                          className="cancel-btn"
+                          onClick={() => setShowLocationModal(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {manualError && <div className="error-message">{manualError}</div>}
                 {manualSuccess && <div className="success-message">{manualSuccess}</div>}

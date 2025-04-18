@@ -109,32 +109,27 @@ export default function Auth() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
-
+    setError(''); setLoading(true);
+    // … build `authUrl` with passcode/coords …
+    const authUrl = `https://getmyuri.com/r/${aliasPath}?${params.toString()}`;
+  
     try {
-      // 1. If location is required but not yet fetched, get it now
-      if (locationRequired && !coords) {
-        await handleLocationRequest().catch(err => {
-          throw new Error('Unable to get location. Please allow access.');
-        });
+      // 1) perform a GET via fetch()
+      const resp = await fetch(authUrl, {
+        method: 'GET',
+        mode: 'cors',                   // if cross‐subdomain
+        credentials: 'include',         // if cookies/session needed
+        redirect: 'manual'              // so fetch won’t auto‐follow
+      });
+  
+      if (resp.status === 302) {
+        // 2) grab the Location header and navigate
+        const location = resp.headers.get('Location');
+        window.location.href = location;
+      } else {
+        throw new Error('Access denied. Please check your password/location.');
       }
-
-      // 2. Build query string
-      const params = new URLSearchParams();
-      if (passwordRequired) params.set('passcode', password);
-      if (locationRequired && coords) {
-        params.set('lat', coords.lat.toString());
-        params.set('lon', coords.lon.toString());
-      }
-
-      // 3. Redirect to the URL
-      const redirectUrl = `https://getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
-      window.location.href = redirectUrl;
-
     } catch (err) {
-      console.error('Error:', err);
       setError(err.message);
       setLoading(false);
     }

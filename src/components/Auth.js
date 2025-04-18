@@ -81,7 +81,7 @@ export default function Auth() {
       // Set the coordinates in state
       setCoords({
         lat: position.coords.latitude,
-        long: position.coords.longitude
+        lon: position.coords.longitude
       });
 
       return {

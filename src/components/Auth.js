@@ -37,37 +37,94 @@ export default function Auth() {
 
   const handleLocationRequest = async () => {
     if (!navigator.geolocation) {
-      throw new Error('Geolocation is not supported by your browser');
+      throw new Error('Your browser does not support location services. Please try using a different browser.');
     }
-    const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-    if (permissionStatus.state === 'denied') {
-      throw new Error('Location access is denied. Please enable it in your browser settings.');
+
+    try {
+      const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+      console.log('Location permission status:', permissionStatus.state);
+      
+      if (permissionStatus.state === 'denied') {
+        throw new Error('Location access is denied. Please enable location services in your browser settings and try again.');
+      }
+
+      return new Promise((resolve, reject) => {
+        const options = {
+          enableHighAccuracy: true, // Try high accuracy first
+          timeout: 10000, // 10 seconds timeout
+          maximumAge: 0
+        };
+
+        console.log('Requesting location with options:', options);
+        
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            console.log('Location obtained:', position);
+            const { latitude, longitude } = position.coords;
+            setCoords({ lat: latitude, lon: longitude });
+            resolve({ latitude, longitude });
+          },
+          error => {
+            console.error('Location error details:', {
+              code: error.code,
+              message: error.message,
+              PERMISSION_DENIED: error.PERMISSION_DENIED,
+              POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
+              TIMEOUT: error.TIMEOUT
+            });
+
+            // Try again with lower accuracy if high accuracy fails
+            if (error.code === error.POSITION_UNAVAILABLE && options.enableHighAccuracy) {
+              console.log('Retrying with lower accuracy...');
+              options.enableHighAccuracy = false;
+              navigator.geolocation.getCurrentPosition(
+                position => {
+                  console.log('Location obtained with lower accuracy:', position);
+                  const { latitude, longitude } = position.coords;
+                  setCoords({ lat: latitude, lon: longitude });
+                  resolve({ latitude, longitude });
+                },
+                retryError => {
+                  console.error('Retry location error:', retryError);
+                  switch (retryError.code) {
+                    case retryError.PERMISSION_DENIED:
+                      reject(new Error('Location access is denied. Please enable location services in your browser settings and try again.'));
+                      break;
+                    case retryError.POSITION_UNAVAILABLE:
+                      reject(new Error('Unable to get your location. Please check that:\n1. Location services are enabled on your device\n2. Your browser has permission to access location\n3. You are connected to the internet'));
+                      break;
+                    case retryError.TIMEOUT:
+                      reject(new Error('Location request timed out. Please check your internet connection and try again.'));
+                      break;
+                    default:
+                      reject(new Error('Unable to get your location. Please check your device settings and try again.'));
+                  }
+                },
+                options
+              );
+            } else {
+              switch (error.code) {
+                case error.PERMISSION_DENIED:
+                  reject(new Error('Location access is denied. Please enable location services in your browser settings and try again.'));
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  reject(new Error('Unable to get your location. Please check that:\n1. Location services are enabled on your device\n2. Your browser has permission to access location\n3. You are connected to the internet'));
+                  break;
+                case error.TIMEOUT:
+                  reject(new Error('Location request timed out. Please check your internet connection and try again.'));
+                  break;
+                default:
+                  reject(new Error('Unable to get your location. Please check your device settings and try again.'));
+              }
+            }
+          },
+          options
+        );
+      });
+    } catch (error) {
+      console.error('Location request error:', error);
+      throw error;
     }
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          const { latitude, longitude } = position.coords;
-          setCoords({ lat: latitude, lon: longitude });
-          resolve({ latitude, longitude });
-        },
-        error => {
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              reject(new Error('Location access is denied. Please enable it in your browser settings.'));
-              break;
-            case error.POSITION_UNAVAILABLE:
-              reject(new Error('Location information is unavailable. Please enable device location services.'));
-              break;
-            case error.TIMEOUT:
-              reject(new Error('Location request timed out. Please try again.'));
-              break;
-            default:
-              reject(new Error('An unknown error occurred while getting location.'));
-          }
-        },
-        { enableHighAccuracy: false, timeout: 30000, maximumAge: 0 }
-      );
-    });
   };
 
   const handleSubmit = async e => {

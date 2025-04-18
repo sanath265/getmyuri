@@ -70,7 +70,6 @@ export default function Auth() {
     });
   };
 
-  // Main submit handler, now using fetch + manual redirect
   const handleSubmit = async e => {
     e.preventDefault();
     setError('');
@@ -83,7 +82,6 @@ export default function Auth() {
     }
     if (locationRequired) {
       if (!coords) {
-        // ensure we have coords
         try {
           await handleLocationRequest();
         } catch (err) {
@@ -99,28 +97,15 @@ export default function Auth() {
     const authUrl = `https://getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
 
     try {
-      // 2) Fetch with manual redirect
+      // 2) Fetch & follow redirect automatically
       const resp = await fetch(authUrl, {
         method: 'GET',
         mode: 'cors',
-        credentials: 'include',
-        redirect: 'manual'
+        redirect: 'follow'
       });
 
-      // 3) Handle redirect or success
-      if (resp.status === 302 || resp.status === 301) {
-        const locationHeader = resp.headers.get('Location');
-        if (locationHeader) {
-          window.location.href = locationHeader;
-        } else {
-          throw new Error('Redirect location missing from response.');
-        }
-      } else if (resp.ok) {
-        // fallback: just navigate to authUrl on 200 OK
-        window.location.href = authUrl;
-      } else {
-        throw new Error('Access denied. Please check your password/location.');
-      }
+      // 3) Navigate to the final URL
+      window.location.href = resp.url;
     } catch (err) {
       console.error('Error during auth fetch:', err);
       setError(err.message);
@@ -128,7 +113,7 @@ export default function Auth() {
     }
   };
 
-  // Show auth‐error messages if redirected back with error=…
+  // Show auth errors if redirected back with ?error=…
   useEffect(() => {
     const lastAuthAttempt = sessionStorage.getItem('lastAuthAttempt');
     if (lastAuthAttempt) {

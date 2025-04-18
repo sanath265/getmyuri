@@ -100,7 +100,7 @@ function Home() {
     setIsLoading(true);
     try {
       const normalized = normalizeUrl(url);
-      const response = await fetch('https://www.getmyuri.com/api/default/shorten', {
+      const response = await fetch('https://getmyuri.com/api/default/shorten', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

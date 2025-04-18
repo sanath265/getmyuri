@@ -126,7 +126,7 @@ export default function Auth() {
       if (passwordRequired) params.set('passcode', password);
       if (locationRequired && coords) {
         params.set('lat', coords.lat.toString());
-        params.set('long', coords.long.toString());
+        params.set('lon', coords.lon.toString());
       }
 
       // 3. Build the redirect URL

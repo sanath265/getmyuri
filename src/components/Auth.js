@@ -29,7 +29,7 @@ export default function Auth() {
   useEffect(() => {
     // If only location is required, fetch it automatically
     if (locationRequired && !passwordRequired && !coords) {
-      fetchLocation().catch(err => {
+      handleLocationRequest().catch(err => {
         setError('Please allow location access to continue');
       });
     }
@@ -78,7 +78,12 @@ export default function Auth() {
         throw new Error('Could not get location coordinates. Please try again.');
       }
 
-      // Return the coordinates
+      // Set the coordinates in state
+      setCoords({
+        lat: position.coords.latitude,
+        long: position.coords.longitude
+      });
+
       return {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude
@@ -86,7 +91,7 @@ export default function Auth() {
 
     } catch (error) {
       console.error('Location error:', error);
-      throw error; // Re-throw to handle in the calling function
+      throw error;
     }
   };
 
@@ -111,7 +116,7 @@ export default function Auth() {
     try {
       // 1. If location is required but not yet fetched, get it now
       if (locationRequired && !coords) {
-        await fetchLocation().catch(err => {
+        await handleLocationRequest().catch(err => {
           throw new Error('Unable to get location. Please allow access.');
         });
       }
@@ -173,7 +178,7 @@ export default function Auth() {
               <button
                 type="button"
                 className="location-btn"
-                onClick={() => fetchLocation().catch(err => setError(err.message))}
+                onClick={() => handleLocationRequest().catch(err => setError(err.message))}
                 disabled={loading}
               >
                 {loading ? 'Please wait…' : 'Allow Location Access'}

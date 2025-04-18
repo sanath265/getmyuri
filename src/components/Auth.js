@@ -94,23 +94,9 @@ export default function Auth() {
       params.set('lon', coords.lon.toString());
     }
 
+    // 2) Let the browser do a normal navigation (no fetch, no CORS)
     const authUrl = `https://getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
-
-    try {
-      // 2) Fetch & follow redirect automatically
-      const resp = await fetch(authUrl, {
-        method: 'GET',
-        mode: 'cors',
-        redirect: 'follow'
-      });
-
-      // 3) Navigate to the final URL
-      window.location.href = resp.url;
-    } catch (err) {
-      console.error('Error during auth fetch:', err);
-      setError(err.message);
-      setLoading(false);
-    }
+    window.location.href = authUrl;
   };
 
   // Show auth errors if redirected back with ?error=…

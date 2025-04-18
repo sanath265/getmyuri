@@ -62,12 +62,12 @@ function Home() {
 
   // Helper to normalize URL
   const normalizeUrl = (url) => {
-    if (!url) return 'http://';
+    if (!url) return 'https://';
     if (url.startsWith('https://')) {
-      return 'http://' + url.substring(8);
+      return 'https://' + url.substring(8);
     }
-    if (!url.startsWith('http://')) {
-      return 'http://' + url;
+    if (!url.startsWith('https://')) {
+      return 'https://' + url;
     }
     return url;
   };
@@ -100,7 +100,7 @@ function Home() {
     setIsLoading(true);
     try {
       const normalized = normalizeUrl(url);
-      const response = await fetch('http://www.getmyuri.com/api/default/shorten', {
+      const response = await fetch('https://www.getmyuri.com/api/default/shorten', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ function Home() {
       }
 
       const data = await response.json();
-      setShortUrl(`http://www.getmyuri.com/r/${data.shortUrl}`);
+      setShortUrl(`https://www.getmyuri.com/r/${data.shortUrl}`);
       setShowPopup(true);
     } catch (err) {
       setUrlError('Failed to shorten URL. Please try again.');

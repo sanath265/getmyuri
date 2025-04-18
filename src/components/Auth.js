@@ -72,7 +72,7 @@ export default function Auth() {
       }
 
       // 3. Build the redirect URL and redirect
-      const redirectUrl = `http://www.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
+      const redirectUrl = `https://www.getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
       console.log('Redirecting to:', redirectUrl);
       
       // Directly redirect to the URL

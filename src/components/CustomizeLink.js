@@ -73,7 +73,7 @@ function StatsPanel() {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch('http://www.getmyuri.com/api/links/click-stats?username=admin');
+        const response = await fetch('https://www.getmyuri.com/api/links/click-stats?username=admin');
         if (!response.ok) throw new Error('Failed to fetch stats');
         const data = await response.json();
         setStats(Array.isArray(data) ? data : []);
@@ -88,7 +88,7 @@ function StatsPanel() {
   }, []);
 
   const handleCopy = async (alias) => {
-    const url = `http://www.getmyuri.com/r/${alias}`;
+    const url = `https://www.getmyuri.com/r/${alias}`;
     const success = await copyToClipboard(url);
     if (success) {
       toast.success('Link copied to clipboard!', {
@@ -297,12 +297,12 @@ function CustomizeLink() {
 
   // Function to normalize URL only if no protocol exists
   const normalizeUrl = (url) => {
-    if (!url) return 'http://';
+    if (!url) return 'https://';
     if (url.startsWith('https://')) {
-      return 'http://' + url.substring(8);
+      return 'https://' + url.substring(8);
     }
-    if (!url.startsWith('http://')) {
-      return 'http://' + url;
+    if (!url.startsWith('https://')) {
+      return 'https://' + url;
     }
     return url;
   };
@@ -331,7 +331,7 @@ function CustomizeLink() {
       setAliasCheckLoading(true);
 
       try {
-        const response = await fetch(`http://www.getmyuri.com/api/links/exists?aliasPath=${compoundAlias}`);
+        const response = await fetch(`https://www.getmyuri.com/api/links/exists?aliasPath=${compoundAlias}`);
         if (!response.ok) throw new Error('Failed to check alias');
         const exists = await response.json();
         
@@ -603,7 +603,7 @@ function CustomizeLink() {
     Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
 
     try {
-      const response = await fetch('http://www.getmyuri.com/api/links', {
+      const response = await fetch('https://www.getmyuri.com/api/links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -611,7 +611,7 @@ function CustomizeLink() {
       if (!response.ok) throw new Error('Failed to create link');
       
       // Set the generated link with combined alias
-      const generatedUrl = `http://www.getmyuri.com/r/${combinedAlias}`;
+      const generatedUrl = `https://www.getmyuri.com/r/${combinedAlias}`;
       setGeneratedLink(generatedUrl);
       
       setManualSuccess('Link created successfully!');
@@ -657,7 +657,7 @@ function CustomizeLink() {
     setManualIsLoading(true);
     try {
       const normalized = normalizeUrl(manualUrl);
-      const response = await fetch('http://www.getmyuri.com/api/default/shorten', {
+      const response = await fetch('https://www.getmyuri.com/api/default/shorten', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -668,7 +668,7 @@ function CustomizeLink() {
         throw new Error('Failed to shorten URL');
       }
       const data = await response.json();
-      setManualShortUrl(`http://www.getmyuri.com/r/${data.shortUrl}`);
+      setManualShortUrl(`https://www.getmyuri.com/r/${data.shortUrl}`);
     } catch (err) {
       setManualUrlError('Failed to shorten URL. Please try again.');
       console.error('Error:', err);

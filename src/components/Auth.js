@@ -125,16 +125,36 @@ export default function Auth() {
       const params = new URLSearchParams();
       if (passwordRequired) params.set('passcode', password);
       if (locationRequired && coords) {
-        params.set('lat',  coords.lat.toString());
+        params.set('lat', coords.lat.toString());
         params.set('long', coords.long.toString());
       }
 
-      // 3. Build the redirect URL and redirect
+      // 3. Build the redirect URL
       const redirectUrl = `https://getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
-      console.log('Redirecting to:', redirectUrl);
       
-      // Directly redirect to the URL
-      window.location.href = redirectUrl;
+      // 4. Try to redirect and handle errors
+      try {
+        const response = await fetch(redirectUrl, { method: 'HEAD' });
+        if (!response.ok) {
+          if (response.status === 401) {
+            if (passwordRequired && locationRequired) {
+              throw new Error('Either you are outside the permitted location area or the password is incorrect.');
+            } else if (passwordRequired) {
+              throw new Error('Incorrect password. Please try again.');
+            } else if (locationRequired) {
+              throw new Error('You are outside the permitted location area. Please check your location.');
+            }
+          }
+          throw new Error('Unauthorized access. Please check your credentials and location.');
+        }
+        // If the HEAD request succeeds, proceed with the redirect
+        window.location.href = redirectUrl;
+      } catch (err) {
+        if (err.message.includes('password') || err.message.includes('location')) {
+          throw err; // Re-throw specific error messages
+        }
+        throw new Error('Failed to verify access. Please try again.');
+      }
 
     } catch (err) {
       console.error('Error:', err);

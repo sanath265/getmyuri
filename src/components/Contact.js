@@ -5,7 +5,6 @@ import '../styles/contact.css';
 import { useAuth } from '../context/AuthContext';
 
 function Contact() {
-  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuth();
   const [firstName, setFirstName] = useState('');
@@ -14,6 +13,7 @@ function Contact() {
   const [message, setMessage] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const [submitStatus, setSubmitStatus] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
@@ -22,7 +22,7 @@ function Contact() {
   };
 
   const validateName = (name) => {
-    return /^[A-Za-z\s]+$/.test(name);
+    return /^[A-Za-z\s]{2,}$/.test(name);
   };
 
   const validateEmail = (email) => {
@@ -35,7 +35,7 @@ function Contact() {
     if (!value.trim()) {
       setFormErrors(prev => ({ ...prev, firstName: 'First name is required' }));
     } else if (!validateName(value)) {
-      setFormErrors(prev => ({ ...prev, firstName: 'First name should only contain letters' }));
+      setFormErrors(prev => ({ ...prev, firstName: 'Please enter a valid first name (minimum 2 characters)' }));
     } else {
       setFormErrors(prev => ({ ...prev, firstName: undefined }));
     }
@@ -47,7 +47,7 @@ function Contact() {
     if (!value.trim()) {
       setFormErrors(prev => ({ ...prev, lastName: 'Last name is required' }));
     } else if (!validateName(value)) {
-      setFormErrors(prev => ({ ...prev, lastName: 'Last name should only contain letters' }));
+      setFormErrors(prev => ({ ...prev, lastName: 'Please enter a valid last name (minimum 2 characters)' }));
     } else {
       setFormErrors(prev => ({ ...prev, lastName: undefined }));
     }
@@ -77,13 +77,34 @@ function Contact() {
     }
   };
 
+  const isFormValid = () => {
+    return (
+      firstName.trim() &&
+      lastName.trim() &&
+      email.trim() &&
+      message.trim() &&
+      validateName(firstName) &&
+      validateName(lastName) &&
+      validateEmail(email) &&
+      message.length >= 10 &&
+      !Object.values(formErrors).some(error => error)
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Check if there are any errors
-    if (Object.values(formErrors).some(error => error !== undefined)) {
+    if (!isFormValid()) {
+      // Validate all fields and show errors
+      handleFirstNameChange({ target: { value: firstName } });
+      handleLastNameChange({ target: { value: lastName } });
+      handleEmailChange({ target: { value: email } });
+      handleMessageChange({ target: { value: message } });
       return;
     }
+
+    setIsSubmitting(true);
+    setSubmitStatus('');
 
     try {
       const templateParams = {
@@ -101,6 +122,7 @@ function Contact() {
 
       if (response.status === 200) {
         setSubmitStatus('success');
+        // Reset form
         setFirstName('');
         setLastName('');
         setEmail('');
@@ -111,6 +133,8 @@ function Contact() {
       }
     } catch (error) {
       setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -119,8 +143,8 @@ function Contact() {
       <nav className="main-nav">
         <div className="nav-left">
           <span className="brand-title">
-            <span className="brand-get">GET</span>
-            <span className="brand-myurl">MYURI</span>
+            <span className="brand-get">Get</span>
+            <span className="brand-myurl">MyUri</span>
           </span>
         </div>
         <div className="nav-links">
@@ -144,52 +168,68 @@ function Contact() {
         <div className="contact-form-container">
           <h2>Contact us for queries</h2>
           <form onSubmit={handleSubmit} className="contact-form">
-            <input
-              type="text"
-              placeholder="First Name"
-              value={firstName}
-              onChange={handleFirstNameChange}
-              className={formErrors.firstName ? 'error' : ''}
-            />
-            {formErrors.firstName && (
-              <span className="error-message">{formErrors.firstName}</span>
-            )}
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="First Name"
+                value={firstName}
+                onChange={handleFirstNameChange}
+                className={formErrors.firstName ? 'error' : ''}
+                disabled={isSubmitting}
+              />
+              {formErrors.firstName && (
+                <span className="error-message">{formErrors.firstName}</span>
+              )}
+            </div>
             
-            <input
-              type="text"
-              placeholder="Last Name"
-              value={lastName}
-              onChange={handleLastNameChange}
-              className={formErrors.lastName ? 'error' : ''}
-            />
-            {formErrors.lastName && (
-              <span className="error-message">{formErrors.lastName}</span>
-            )}
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="Last Name"
+                value={lastName}
+                onChange={handleLastNameChange}
+                className={formErrors.lastName ? 'error' : ''}
+                disabled={isSubmitting}
+              />
+              {formErrors.lastName && (
+                <span className="error-message">{formErrors.lastName}</span>
+              )}
+            </div>
             
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={handleEmailChange}
-              className={formErrors.email ? 'error' : ''}
-            />
-            {formErrors.email && (
-              <span className="error-message">{formErrors.email}</span>
-            )}
+            <div className="form-group">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={handleEmailChange}
+                className={formErrors.email ? 'error' : ''}
+                disabled={isSubmitting}
+              />
+              {formErrors.email && (
+                <span className="error-message">{formErrors.email}</span>
+              )}
+            </div>
             
-            <textarea
-              placeholder="Message"
-              value={message}
-              onChange={handleMessageChange}
-              className={formErrors.message ? 'error' : ''}
-              rows="5"
-            />
-            {formErrors.message && (
-              <span className="error-message">{formErrors.message}</span>
-            )}
+            <div className="form-group">
+              <textarea
+                placeholder="Message"
+                value={message}
+                onChange={handleMessageChange}
+                className={formErrors.message ? 'error' : ''}
+                rows="5"
+                disabled={isSubmitting}
+              />
+              {formErrors.message && (
+                <span className="error-message">{formErrors.message}</span>
+              )}
+            </div>
             
-            <button type="submit" className="submit-button">
-              Submit
+            <button 
+              type="submit" 
+              className="submit-button"
+              disabled={isSubmitting || !isFormValid()}
+            >
+              {isSubmitting ? 'Sending...' : 'Submit'}
             </button>
             
             {submitStatus === 'success' && (

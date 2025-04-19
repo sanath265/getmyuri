@@ -214,8 +214,8 @@ function Home() {
     <div className="home-container">
       <nav className="navbar">
         <span className="brand-title">
-          <span className="brand-get">GET</span>
-          <span className="brand-myurl">MYURI</span>
+          <span className="brand-get">Get</span>
+          <span className="brand-myurl">MyUri</span>
         </span>
         {isLoggedIn ? (
           <div className="nav-links">

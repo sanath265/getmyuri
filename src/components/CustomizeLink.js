@@ -74,7 +74,11 @@ function StatsPanel() {
         const response = await fetch('https://getmyuri.com/api/links/click-stats?username=admin');
         if (!response.ok) throw new Error('Failed to fetch stats');
         const data = await response.json();
-        setStats(Array.isArray(data) ? data : []);
+        // Sort stats by clickCount in descending order
+        const sortedStats = Array.isArray(data) 
+          ? data.sort((a, b) => b.clickCount - a.clickCount)
+          : [];
+        setStats(sortedStats);
       } catch (err) {
         setError('Failed to load stats');
         setStats([]);
@@ -141,49 +145,64 @@ function StatsPanel() {
         <div className="options-overlay-backdrop" onClick={handleBackdropClick} />
       )}
       {loading ? (
-        <div className="stats-loading">Loading...</div>
+        <div className="stats-loading">
+          <div className="loading-spinner"></div>
+          <span>Loading your links...</span>
+        </div>
       ) : error ? (
-        <div className="stats-error">{error}</div>
+        <div className="stats-error">
+          <span className="error-icon">⚠️</span>
+          {error}
+        </div>
       ) : stats.length === 0 ? (
-        <div className="stats-empty">No links generated</div>
+        <div className="stats-empty">
+          <span>🔗</span>
+          <p>No links generated yet</p>
+        </div>
       ) : (
         stats.slice(0, 6).map((item, index) => (
-          <div key={item.id} className="stats-item">
-            <button 
-              className="copy-btn" 
-              onClick={() => handleCopy(item.alias)}
-              title="Copy URL"
-            >
-              <FaCopy />
-            </button>
-            <span className="url">{`getmyuri.com/r/${item.alias}`}</span>
-            <div className="views">
-              <span className="views-count">{item.clickCount}</span>
-              <span>views</span>
-            </div>
-            <button 
-              className="options-btn" 
-              title="More options"
-              onClick={() => handleOptionsClick(index)}
-            >
-              <FaEllipsisV />
-            </button>
-            {activeOptionsIndex === index && (
-              <div className="options-overlay">
-                <button onClick={() => handleView(item.alias)}>
-                  <FaEye />
-                  View
-                </button>
-                <button onClick={() => handleEdit(item.alias)}>
-                  <FaPencilAlt />
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(item.alias)}>
-                  <FaTrash />
-                  Delete
-                </button>
+          <div 
+            key={item.id} 
+            className="stats-item"
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className="url">getmyuri.com/r/{item.alias}</div>
+            <div className="link-actions">
+              <div className="views">
+                <span className="views-icon">👁️</span>
+                {item.clickCount} views
               </div>
-            )}
+              <button 
+                className="copy-btn" 
+                onClick={() => handleCopy(item.alias)}
+                title="Copy URL"
+              >
+                <FaCopy />
+              </button>
+              <button 
+                className="options-btn" 
+                title="More options"
+                onClick={() => handleOptionsClick(index)}
+              >
+                <FaEllipsisV />
+              </button>
+              {activeOptionsIndex === index && (
+                <div className="options-overlay">
+                  <button onClick={() => handleView(item.alias)}>
+                    <FaEye />
+                    View
+                  </button>
+                  <button onClick={() => handleEdit(item.alias)}>
+                    <FaPencilAlt />
+                    Edit
+                  </button>
+                  <button onClick={() => handleDelete(item.alias)}>
+                    <FaTrash />
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ))
       )}
@@ -207,6 +226,7 @@ function CustomizeLink() {
   const [linkError, setLinkError] = useState('');
   const [aliases, setAliases] = useState(['']);
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [expirationHour, setExpirationHour] = useState('12');
   const [expirationMinute, setExpirationMinute] = useState('00');
   const [expirationAmPm, setExpirationAmPm] = useState('AM');
@@ -784,12 +804,12 @@ function CustomizeLink() {
     <div className="app-container">
       <nav className="main-nav">
         <span className="brand-title">
-          <span className="brand-get">GET</span>
-          <span className="brand-myurl">MYURI</span>
+          <span className="brand-get">Get</span>
+          <span className="brand-myurl">MyUri</span>
         </span>
         <div className="nav-links">
+        <button className="dashboard-btn" onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button className="contact-btn" onClick={() => navigate('/contact')}>Contact Us</button>
-          <button className="dashboard-btn" onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
       </nav>
@@ -886,12 +906,21 @@ function CustomizeLink() {
 
                 <div className="form-group">
                   <label>Password (Optional)</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Set password for link"
-                  />
+                  <div className="password-input-container">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Set password for link"
+                    />
+                    <button 
+                      type="button" 
+                      className="password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="form-group">

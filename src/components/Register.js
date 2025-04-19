@@ -5,6 +5,7 @@ import '../styles/login.css';
 function Register() {
   const [Email, setEmail] = useState('');
   const [Password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleForgotPassword = (e) => {
     e.preventDefault();
@@ -20,9 +21,22 @@ function Register() {
             <label>Email</label>
             <input value={Email} onChange={(e) => setEmail(e.target.value)} type="email" />
           </div>
-          <div className="form-group">
+          <div className="form-group password-group">
             <label>Password</label>
-            <input value={Password} onChange={(e) => setPassword(e.target.value)} type="password" />
+            <div className="password-input-container">
+              <input 
+                value={Password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                type={showPassword ? "text" : "password"}
+              />
+              <button 
+                type="button" 
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
           <button type="submit" className="login-button">
             Sign up

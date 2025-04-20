@@ -278,7 +278,7 @@ function CustomizeLink() {
     }
 
     // Subtract 6 hours (6 * 60 * 60 * 1000 milliseconds)
-    return timestamp - (6 * 60 * 60 * 1000);
+    return timestamp;
   };
 
   // Function to handle copying the generated link

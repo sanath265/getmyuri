@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import '../styles/dashboard.css';
 import Toast from './Toast';
 import { useAuth } from '../context/AuthContext';
+import logo from '../assets/images/logo.jpeg';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -96,14 +97,13 @@ function Dashboard() {
         />
       )}
       <nav className="main-nav">
-        <span className="brand-title">
-          <span className="brand-get">Get</span>
-          <span className="brand-myurl">MyUri</span>
-        </span>
-        <div className="nav-links">
-          <button className="dashboard-btn" onClick={() => navigate('/')}>Create Link</button>
-          <button className="contact-btn" onClick={() => navigate('/contact')}>Contact Us</button>
-          <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <div className="nav-left">
+          <img src={logo} alt="GetMyUri" className="nav-logo" onClick={() => navigate('/')} />
+        </div>
+        <div className="nav-right">
+          <Link to="/customize" className="nav-btn">Create Link</Link>
+          <Link to="/contact" className="nav-btn">Contact Us</Link>
+          <Link to="/logout" className="nav-btn logout-btn">Logout</Link>
         </div>
       </nav>
 

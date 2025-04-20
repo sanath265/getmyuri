@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
 import '../styles/contact.css';
 import { useAuth } from '../context/AuthContext';
+import logo from '../assets/images/logo.jpeg';
 
 function Contact() {
   const navigate = useNavigate();
@@ -142,10 +143,7 @@ function Contact() {
     <div className="contact-container">
       <nav className="main-nav">
         <div className="nav-left">
-          <span className="brand-title">
-            <span className="brand-get">Get</span>
-            <span className="brand-myurl">MyUri</span>
-          </span>
+          <img src={logo} alt="GetMyUri" className="nav-logo" onClick={() => navigate('/')} />
         </div>
         <div className="nav-links">
           {isLoggedIn ? (

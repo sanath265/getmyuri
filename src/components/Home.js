@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/home.css';
 import { copyToClipboard } from '../utils/clipboard';
+import logo from '../assets/images/logo.jpeg';
 
 function Home() {
   const { isLoggedIn } = useAuth();
@@ -22,6 +23,7 @@ function Home() {
   const [shortUrl, setShortUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
   const slides = [
     {
@@ -213,18 +215,20 @@ function Home() {
   return (
     <div className="home-container">
       <nav className="navbar">
-        <span className="brand-title">
-          <span className="brand-get">Get</span>
-          <span className="brand-myurl">MyUri</span>
-        </span>
+        <img src={logo} alt="GetMyUri" className="nav-logo" onClick={() => navigate('/')} />
         {isLoggedIn ? (
           <div className="nav-links">
             <Link to="/customize" className="nav-btn">Create Link</Link>
             <Link to="/dashboard" className="nav-btn">Dashboard</Link>
+            <Link to="/contact" className="nav-btn">Contact</Link>
             <Link to="/logout" className="nav-btn logout-btn">Logout</Link>
           </div>
         ) : (
-          <Link to="/login" className="sign-in-button">Sign in</Link>
+          <div className="nav-links">
+            <Link to="/login" className="nav-btn">Login</Link>
+            <Link to="/register" className="nav-btn">Register</Link>
+            <Link to="/contact" className="nav-btn">Contact</Link>
+          </div>
         )}
       </nav>
 

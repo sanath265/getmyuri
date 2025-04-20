@@ -75,6 +75,17 @@
   transform: translateY(-1px);
 }
 
+.nav-logo {
+  height: 32px;
+  width: auto;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.nav-logo:hover {
+  transform: scale(1.05);
+}
+
 .contact-content {
   padding: 2rem;
   max-width: 800px;

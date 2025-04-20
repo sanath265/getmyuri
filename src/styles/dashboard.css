@@ -8,134 +8,72 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 2rem;
-  background: white;
+  height: 60px;
+  background-color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
-  height: 48px;
-  transition: all 0.3s ease;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  animation: slideDown 0.3s ease-out;
 }
 
-.main-nav:hover {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.brand-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  font-family: 'Righteous', cursive;
+.nav-left {
   display: flex;
   align-items: center;
-  gap: 2px;
-  transition: transform 0.3s ease;
 }
 
-.brand-title:hover {
+.nav-logo {
+  height: 40px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.nav-logo:hover {
   transform: scale(1.05);
 }
 
-.brand-get {
-  color: #E94444;
-  transition: color 0.3s ease;
-}
-
-.brand-get::first-letter {
-  font-size: 1.2em;
-}
-
-.brand-myurl {
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.brand-myurl::first-letter {
-  font-size: 1.2em;
-}
-
-.brand-myurl::last-letter {
-  font-size: 1.2em;
-}
-
-.nav-links {
+.nav-right {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
-.nav-links button {
-  padding: 0.5rem 1.25rem;
-  border: 2px solid #E94444;
-  border-radius: 6px;
-  cursor: pointer;
+.nav-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
   font-size: 0.9rem;
   font-weight: 500;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  background: transparent;
-  color: #E94444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: #333;
+  background-color: #f5f5f5;
 }
 
-.nav-links button::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  transform: translate(-50%, -50%) scale(0);
-  border-radius: inherit;
-  transition: transform 0.3s ease;
-}
-
-.nav-links button:hover::before {
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.nav-links button:hover {
-  background: #E94444;
-  color: white;
-  transform: translateY(-1px);
-}
-
-.contact-btn {
-  background: transparent;
-  color: #E94444;
-  border: 2px solid #E94444;
-}
-
-.contact-btn:hover {
-  background: #E94444;
-  color: white;
-  transform: translateY(-1px);
-}
-
-.dashboard-btn {
-  background: transparent;
-  color: #E94444;
-  border: 2px solid #E94444;
-}
-
-.dashboard-btn:hover {
-  background: #E94444;
-  color: white;
+.nav-btn:hover {
+  background-color: #e0e0e0;
   transform: translateY(-1px);
 }
 
 .logout-btn {
-  background: transparent;
-  color: #E94444;
-  border: 2px solid #E94444 !important;
+  background-color: #E94444;
+  color: white;
 }
 
 .logout-btn:hover {
-  background: #E94444;
-  color: white;
-  transform: translateY(-1px);
+  background-color: #d63939;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .dashboard-content {

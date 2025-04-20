@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Circle, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { debounce } from 'lodash';
 import { copyToClipboard } from '../utils/clipboard';
+import logo from '../assets/images/logo.jpeg';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -803,14 +804,13 @@ function CustomizeLink() {
   return (
     <div className="app-container">
       <nav className="main-nav">
-        <span className="brand-title">
-          <span className="brand-get">Get</span>
-          <span className="brand-myurl">MyUri</span>
-        </span>
-        <div className="nav-links">
-        <button className="dashboard-btn" onClick={() => navigate('/dashboard')}>Dashboard</button>
-          <button className="contact-btn" onClick={() => navigate('/contact')}>Contact Us</button>
-          <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <div className="nav-left">
+          <img src={logo} alt="GetMyUri" className="nav-logo" onClick={() => navigate('/')} />
+        </div>
+        <div className="nav-right">
+          <Link to="/dashboard" className="nav-btn">Dashboard</Link>
+          <Link to="/contact" className="nav-btn">Contact Us</Link>
+          <Link to="/logout" className="nav-btn logout-btn">Logout</Link>
         </div>
       </nav>
       <div className="content-container" style={{ background: '#fff', minHeight: '100vh', paddingBottom: '2rem' }}>

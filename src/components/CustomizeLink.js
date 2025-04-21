@@ -506,76 +506,75 @@ function CustomizeLink() {
     }
   };
 
-  const getLocationWithRetry = async (options, retries = 2) => {
-    return new Promise((resolve, reject) => {
-      const attemptGetLocation = (attempt = 0) => {
-        navigator.geolocation.getCurrentPosition(
-          resolve,
-          (error) => {
-            if (error.code === error.TIMEOUT && attempt < retries) {
-              // Retry on timeout
-              attemptGetLocation(attempt + 1);
-            } else {
+  const getLocationWithRetry = async (retries = 3) => {
+    if (!navigator.geolocation) {
+      throw new Error('Geolocation is not supported by your browser');
+    }
+
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        return await new Promise((resolve, reject) => {
+          const options = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          };
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              resolve({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+              });
+            },
+            (error) => {
+              // Handle kCLErrorLocationUnknown specifically
+              if (error.code === 2 && error.message.includes('kCLErrorLocationUnknown')) {
+                // Try with lower accuracy on next attempt
+                if (attempt < retries - 1) {
+                  options.enableHighAccuracy = false;
+                  options.timeout = 15000; // Increase timeout
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                      });
+                    },
+                    (retryError) => reject(retryError),
+                    options
+                  );
+                  return;
+                }
+              }
               reject(error);
-            }
-          },
-          options
-        );
-      };
-      attemptGetLocation();
-    });
+            },
+            options
+          );
+        });
+      } catch (error) {
+        if (attempt === retries - 1) {
+          throw error;
+        }
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
   };
 
   const handleLocationClick = async () => {
     setIsLocationLoading(true);
-    setLocationError('');
+    setLocationError(null);
     
     try {
-      if (!navigator.geolocation) {
-        throw new Error('Geolocation is not supported by your browser');
-      }
-
-      // Try with high accuracy first
-      const position = await getLocationWithRetry({
-        enableHighAccuracy: true,
-        timeout: 30000, // 30 seconds
-        maximumAge: 0
-      }).catch(async (error) => {
-        // If high accuracy fails, try with lower accuracy
-        if (error.code === error.POSITION_UNAVAILABLE) {
-          return getLocationWithRetry({
-            enableHighAccuracy: false,
-            timeout: 30000,
-            maximumAge: 0
-          });
-        }
-        throw error;
-      });
-      
-      if (!position || !position.coords) {
-        throw new Error('Could not get location coordinates. Please try again.');
-      }
-
-      setLocation(prev => ({
-        ...prev,
-        position: [position.coords.latitude, position.coords.longitude]
-      }));
-      setShowLocationModal(true);
+      const locationData = await getLocationWithRetry();
+      setLocation(locationData);
+      setLocationSource('gps');
     } catch (error) {
       console.error('Location error:', error);
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          setLocationError('Location access is denied. Please enable it in your browser settings.');
-          break;
-        case error.POSITION_UNAVAILABLE:
-          setLocationError('Location information is unavailable. Please ensure your device\'s location services are enabled and try again.');
-          break;
-        case error.TIMEOUT:
-          setLocationError('Location request timed out after multiple attempts. Please check your internet connection and try again.');
-          break;
-        default:
-          setLocationError('An unknown error occurred while getting location. Please try again.');
-      }
+      setLocationError('Unable to get your location. Please try again.');
     } finally {
       setIsLocationLoading(false);
     }

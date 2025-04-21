@@ -62,14 +62,60 @@ export default function Auth() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLoading(false);
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        
+        // Update both location and coords states
         setLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude,
+          longitude,
           accuracy: position.coords.accuracy
+        });
+        
+        setCoords({
+          lat: latitude,
+          lon: longitude
         });
       },
       (error) => {
         setLoading(false);
+        
+        // Handle kCLErrorLocationUnknown specifically
+        if (error.code === 2 && error.message.includes('kCLErrorLocationUnknown')) {
+          // Try again with lower accuracy
+          const lowAccuracyOptions = {
+            enableHighAccuracy: false,
+            timeout: 15000,
+            maximumAge: 0
+          };
+          
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setLoading(false);
+              const latitude = position.coords.latitude;
+              const longitude = position.coords.longitude;
+              
+              // Update both location and coords states
+              setLocation({
+                latitude,
+                longitude,
+                accuracy: position.coords.accuracy
+              });
+              
+              setCoords({
+                lat: latitude,
+                lon: longitude
+              });
+            },
+            (retryError) => {
+              setLoading(false);
+              setError('Unable to determine your location. Please check your device settings and try again.');
+            },
+            lowAccuracyOptions
+          );
+          return;
+        }
+        
         switch (error.code) {
           case error.PERMISSION_DENIED:
             setError('Location access was denied. Please enable location services to continue.');

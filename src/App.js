@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,8 +23,10 @@ function AppRoutes() {
       <Route path="/customize" element={<CustomizeLink />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/auth.html" element={<Auth />} />
+      <Route path="/r/:aliasPath" element={<Auth />} />
       {/* Catch-all route for GitHub Pages 404 redirect */}
-      <Route path="*" element={<Auth />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

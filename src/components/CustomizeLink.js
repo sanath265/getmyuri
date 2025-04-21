@@ -14,6 +14,65 @@ import { debounce } from 'lodash';
 import { copyToClipboard } from '../utils/clipboard';
 import logo from '../assets/images/logo.jpeg';
 
+// after your imports, before any components:
+
+/** Fallback to IP if GPS fails. */
+async function getLocationByIP() {
+  const resp = await fetch('https://ipapi.co/json/');
+  if (!resp.ok) throw new Error('IP lookup failed');
+  const { latitude, longitude } = await resp.json();
+  return { latitude, longitude, accuracy: 5000, source: 'ip' };
+}
+
+/**
+ * Try high‑accuracy GPS up to 3×, then low‑accuracy once, then IP.
+ */
+async function getLocationWithRetry(retries = 3) {
+  if (!navigator.geolocation) return getLocationByIP();
+
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await new Promise((res, rej) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => res({ 
+            latitude:  pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy:  pos.coords.accuracy,
+            source:    'gps'
+          }),
+          err => rej(err),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      });
+    } catch (err) {
+      console.warn(`GPS attempt ${i+1} failed:`, err);
+      // on last GPS failure if “unknown”, try low‑accuracy
+      if (i === retries - 1 && err.code === err.POSITION_UNAVAILABLE) {
+        try {
+          return await new Promise((res, rej) => {
+            navigator.geolocation.getCurrentPosition(
+              pos => res({
+                latitude:  pos.coords.latitude,
+                longitude: pos.coords.longitude,
+                accuracy:  pos.coords.accuracy,
+                source:    'gps-low'
+              }),
+              err2 => rej(err2),
+              { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 }
+            );
+          });
+        } catch {
+          return getLocationByIP();
+        }
+      }
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+
+  return getLocationByIP();
+}
+
+
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -599,30 +658,27 @@ function CustomizeLink() {
 
   const handleLocationClick = async () => {
     setIsLocationLoading(true);
-    setLocationError(null);
-    
+    setLocationError('');
     try {
-      const locationData = await getLocationWithRetry();
-      setLocation({
-        position: [locationData.latitude, locationData.longitude],
-        radius: location.radius,
-        unit: location.unit
-      });
-      setLocationSource(locationData.source);
-      
-      // Show success message based on source
-      if (locationData.source === 'ip') {
-        toast.info('Using approximate location based on IP address');
-      } else if (locationData.source === 'gps-low') {
-        toast.info('Using lower accuracy GPS location');
-      }
-    } catch (error) {
-      console.error('Location error:', error);
-      setLocationError('Unable to get your location. Please try again or enter location manually.');
+      const loc = await getLocationWithRetry();
+      setLocation(prev => ({
+        ...prev,
+        position: [loc.latitude, loc.longitude]
+      }));
+      setLocationSource(loc.source);
+      toast.info(
+        loc.source === 'ip'      ? 'Using approximate IP location' :
+        loc.source === 'gps-low' ? 'Using low‑accuracy GPS' :
+                                   'GPS location acquired'
+      );
+    } catch (err) {
+      console.error('Location error:', err);
+      setLocationError('Unable to get your location. Please try again.');
     } finally {
       setIsLocationLoading(false);
     }
   };
+  
 
   const handleDeleteLocation = () => {
     setLocation(prev => ({

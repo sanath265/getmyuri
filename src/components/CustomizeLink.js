@@ -506,48 +506,23 @@ function CustomizeLink() {
     }
   };
 
-  const getLocationByIP = async () => {
-    try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      return {
-        position: [data.latitude, data.longitude],
-        accuracy: 5000, // IP geolocation is less accurate, roughly 5km
-        source: 'ip'
-      };
-    } catch (error) {
-      console.error('IP Geolocation failed:', error);
-      throw error;
-    }
-  };
-
-  const getLocationByGPS = () => {
+  const getLocationWithRetry = async (options, retries = 2) => {
     return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported by your browser'));
-        return;
-      }
-
-      const options = {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 30000
+      const attemptGetLocation = (attempt = 0) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          (error) => {
+            if (error.code === error.TIMEOUT && attempt < retries) {
+              // Retry on timeout
+              attemptGetLocation(attempt + 1);
+            } else {
+              reject(error);
+            }
+          },
+          options
+        );
       };
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            position: [position.coords.latitude, position.coords.longitude],
-            accuracy: position.coords.accuracy,
-            source: 'gps'
-          });
-        },
-        (error) => {
-          console.error('GPS location error:', error);
-          reject(error);
-        },
-        options
-      );
+      attemptGetLocation();
     });
   };
 
@@ -556,72 +531,51 @@ function CustomizeLink() {
     setLocationError('');
     
     try {
-      // First try GPS
-      try {
-        const gpsLocation = await getLocationByGPS();
-        setLocation(prev => ({
-          ...prev,
-          position: gpsLocation.position,
-          accuracy: gpsLocation.accuracy,
-          source: gpsLocation.source
-        }));
-        setShowLocationModal(true);
-        
-        // Show success message with accuracy
-        const accuracyInMeters = Math.round(gpsLocation.accuracy);
-        toast.success(`Location found! Accuracy: ${accuracyInMeters}m`, {
-          position: "top-right",
-          autoClose: 5000,
-        });
-        return;
-      } catch (gpsError) {
-        console.log('GPS failed, trying IP geolocation:', gpsError);
-        
-        // If GPS fails, try IP geolocation
-        try {
-          const ipLocation = await getLocationByIP();
-          setLocation(prev => ({
-            ...prev,
-            position: ipLocation.position,
-            accuracy: ipLocation.accuracy,
-            source: ipLocation.source
-          }));
-          setShowLocationModal(true);
-          
-          // Notify user that we're using less accurate IP geolocation
-          toast.info('Using IP-based location (less accurate). Enable GPS for better accuracy.', {
-            position: "top-right",
-            autoClose: 7000,
-          });
-          return;
-        } catch (ipError) {
-          // If both methods fail, throw the original GPS error
-          throw gpsError;
-        }
+      if (!navigator.geolocation) {
+        throw new Error('Geolocation is not supported by your browser');
       }
-    } catch (error) {
-      console.error('Location detection failed:', error);
-      let errorMessage = 'Failed to detect location. ';
+
+      // Try with high accuracy first
+      const position = await getLocationWithRetry({
+        enableHighAccuracy: true,
+        timeout: 30000, // 30 seconds
+        maximumAge: 0
+      }).catch(async (error) => {
+        // If high accuracy fails, try with lower accuracy
+        if (error.code === error.POSITION_UNAVAILABLE) {
+          return getLocationWithRetry({
+            enableHighAccuracy: false,
+            timeout: 30000,
+            maximumAge: 0
+          });
+        }
+        throw error;
+      });
       
+      if (!position || !position.coords) {
+        throw new Error('Could not get location coordinates. Please try again.');
+      }
+
+      setLocation(prev => ({
+        ...prev,
+        position: [position.coords.latitude, position.coords.longitude]
+      }));
+      setShowLocationModal(true);
+    } catch (error) {
+      console.error('Location error:', error);
       switch (error.code) {
-        case 1: // PERMISSION_DENIED
-          errorMessage += 'Please enable location services in your device settings.';
+        case error.PERMISSION_DENIED:
+          setLocationError('Location access is denied. Please enable it in your browser settings.');
           break;
-        case 2: // POSITION_UNAVAILABLE
-          errorMessage += 'Location information is unavailable. Check your device settings and internet connection.';
+        case error.POSITION_UNAVAILABLE:
+          setLocationError('Location information is unavailable. Please ensure your device\'s location services are enabled and try again.');
           break;
-        case 3: // TIMEOUT
-          errorMessage += 'Location request timed out. Please check your internet connection and try again.';
+        case error.TIMEOUT:
+          setLocationError('Location request timed out after multiple attempts. Please check your internet connection and try again.');
           break;
         default:
-          errorMessage += 'Please try again or enter location manually.';
+          setLocationError('An unknown error occurred while getting location. Please try again.');
       }
-      
-      setLocationError(errorMessage);
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 7000,
-      });
     } finally {
       setIsLocationLoading(false);
     }
@@ -847,23 +801,6 @@ function CustomizeLink() {
 
   const [copied, setCopied] = useState(false);
 
-  const LocationDisplay = ({ location }) => (
-    <div className="location-info">
-      <div className="location-details">
-        <div className="location-coordinates">
-          Lat: {location.position[0].toFixed(6)}, Long: {location.position[1].toFixed(6)}
-        </div>
-        <div className="location-accuracy">
-          {location.source === 'gps' ? (
-            <span>GPS Accuracy: ~{Math.round(location.accuracy)}m</span>
-          ) : (
-            <span>IP-based location (approximate)</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="app-container">
       <nav className="main-nav">
@@ -885,14 +822,14 @@ function CustomizeLink() {
               className={`mode-pill${mode === 'manual' ? ' selected' : ''}`}
               onClick={() => setMode('manual')}
             >
-              Custom
+              Manual
             </button>
             <button
               type="button"
               className={`mode-pill${mode === 'automatic' ? ' selected' : ''}`}
               onClick={() => setMode('automatic')}
             >
-              Auto
+              Automatic
             </button>
           </div>
 
@@ -1069,67 +1006,41 @@ function CustomizeLink() {
                 <div className="form-group">
                   <label>Location Access</label>
                   {!location.position ? (
-                    <div className="location-button-container">
-                      <button
-                        type="button"
-                        className="location-btn"
-                        onClick={handleLocationClick}
-                        disabled={isLocationLoading}
-                      >
-                        {isLocationLoading ? (
-                          <>
-                            <div className="loading-spinner-small"></div>
-                            Detecting Location...
-                          </>
-                        ) : (
-                          <>
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" className="location-icon">
-                              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                            </svg>
-                            Detect Location
-                          </>
-                        )}
-                      </button>
-                      {locationError && (
-                        <div className="location-error-container">
-                          <div className="error-message">
-                            <span className="error-icon">⚠️</span>
-                            {locationError}
-                          </div>
-                          <div className="error-actions">
-                            <button
-                              type="button"
-                              className="retry-location-btn"
-                              onClick={handleLocationClick}
-                              disabled={isLocationLoading}
-                            >
-                              Try Again
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      className="location-btn"
+                      onClick={handleLocationClick}
+                      disabled={isLocationLoading}
+                    >
+                      {isLocationLoading ? 'Getting Location...' : 'Set Location'}
+                    </button>
                   ) : (
                     <div className="location-controls">
-                      <LocationDisplay location={location} />
+                      <div className="location-info">
+                        Location set
+                        <div className="location-details">
+                          Lat: {location.position[0].toFixed(6)}, Long: {location.position[1].toFixed(6)}
+                        </div>
+                      </div>
                       <div className="location-actions">
                         <button
                           type="button"
                           className="edit-location-btn"
-                          onClick={() => setShowLocationModal(true)}
+                          onClick={handleEditLocation}
                         >
-                          Adjust Location
+                          Edit Location
                         </button>
                         <button
                           type="button"
                           className="delete-location-btn"
                           onClick={handleDeleteLocation}
                         >
-                          Remove Location
+                          Delete Location
                         </button>
                       </div>
                     </div>
                   )}
+                  {locationError && <div className="error-message">{locationError}</div>}
                 </div>
 
                 {showLocationModal && (

@@ -669,6 +669,8 @@ function CustomizeLink() {
         loc.source === 'gps-low' ? 'Using low‑accuracy GPS' :
                                    'GPS location acquired'
       );
+      // Show the location modal after getting the location
+      setShowLocationModal(true);
     } catch (err) {
       console.error('Location error:', err);
       setLocationError('Unable to get your location. Please try again.');
@@ -1162,9 +1164,9 @@ function CustomizeLink() {
                           <label>Radius: {location.radius} {location.unit}</label>
                           <input
                             type="range"
-                            min="0.1"
-                            max="10"
-                            step="0.1"
+                            min="1"
+                            max="10000"
+                            step="1"
                             value={location.radius}
                             onChange={handleRadiusChange}
                             className="radius-slider"
@@ -1176,7 +1178,6 @@ function CustomizeLink() {
                           className="unit-select"
                         >
                           <option value="miles">Miles</option>
-                          <option value="meters">Meters</option>
                         </select>
                       </div>
                       <div className="modal-buttons">

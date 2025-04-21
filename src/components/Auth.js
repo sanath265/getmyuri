@@ -54,10 +54,11 @@ export default function Auth() {
 
   // Auto‑ask for location if that's the only thing required
   useEffect(() => {
-    if (requiresLocation && !requiresPassword && !location) {
+    // if we already have a "reason" (i.e. an error to show), skip auto‑asking
+    if (!reason && requiresLocation && !requiresPassword && !location) {
       handleLocationRequest().catch(() => {});
     }
-  }, [requiresLocation, requiresPassword, location]);
+    }, [reason, requiresLocation, requiresPassword, location]);
 
   // Fallback: IP‑based lookup
   const getLocationByIP = async () => {

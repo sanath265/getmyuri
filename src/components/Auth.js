@@ -9,6 +9,7 @@ export default function Auth() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccess] = useState('');
+  const [location, setLocation] = useState(null);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -21,15 +22,14 @@ export default function Auth() {
   // Check if location and password are required
   const requiresLocation = required.includes('loc');
   const requiresPassword = required.includes('pass');
+  const locationRequired = requiresLocation && !location;
 
   // Auto-request location if only location is required
   useEffect(() => {
-    if (requiresLocation && !requiresPassword && !coords) {
-      handleLocationRequest().catch(err => {
-        setError('Please allow location access to continue');
-      });
+    if (locationRequired && !requiresPassword && !coords) {
+      handleLocationRequest();
     }
-  }, [requiresLocation, requiresPassword, coords]);
+  }, [locationRequired, requiresPassword, coords]);
 
   // Handle error messages based on reason and required parameters
   useEffect(() => {
@@ -44,54 +44,48 @@ export default function Auth() {
     }
   }, [reason, requiresPassword, requiresLocation]);
 
-  const handleLocationRequest = async () => {
+  const handleLocationRequest = () => {
     if (!navigator.geolocation) {
-      throw new Error('Your browser does not support location services. Please try using a different browser.');
+      setError('Geolocation is not supported by your browser');
+      return;
     }
 
-    try {
-      const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-      console.log('Location permission status:', permissionStatus.state);
-      
-      if (permissionStatus.state === 'denied') {
-        throw new Error('Location access is denied. Please enable location services in your browser settings and try again.');
-      }
+    setLoading(true);
+    setError(null);
 
-      return new Promise((resolve, reject) => {
-        const options = {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        };
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
 
-        navigator.geolocation.getCurrentPosition(
-          position => {
-            const { latitude, longitude } = position.coords;
-            setCoords({ lat: latitude, lon: longitude });
-            resolve({ latitude, longitude });
-          },
-          error => {
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                reject(new Error('Location access is denied. Please enable location services in your browser settings and try again.'));
-                break;
-              case error.POSITION_UNAVAILABLE:
-                reject(new Error('Unable to get your location. Please check that:\n1. Location services are enabled on your device\n2. Your browser has permission to access location\n3. You are connected to the internet'));
-                break;
-              case error.TIMEOUT:
-                reject(new Error('Location request timed out. Please check your internet connection and try again.'));
-                break;
-              default:
-                reject(new Error('Unable to get your location. Please check your device settings and try again.'));
-            }
-          },
-          options
-        );
-      });
-    } catch (error) {
-      console.error('Location request error:', error);
-      throw error;
-    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLoading(false);
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        });
+      },
+      (error) => {
+        setLoading(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setError('Location access was denied. Please enable location services to continue.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setError('Location information is unavailable. Please check your device settings.');
+            break;
+          case error.TIMEOUT:
+            setError('Location request timed out. Please try again.');
+            break;
+          default:
+            setError('An unknown error occurred while getting location.');
+        }
+      },
+      options
+    );
   };
 
   const handleSubmit = async e => {
@@ -157,7 +151,7 @@ export default function Auth() {
               <button
                 type="button"
                 className="location-btn"
-                onClick={() => handleLocationRequest().catch(err => setError(err.message))}
+                onClick={() => handleLocationRequest()}
                 disabled={loading}
               >
                 {loading ? 'Please wait…' : 'Allow Location Access'}

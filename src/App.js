@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -12,6 +12,20 @@ import Contact from './components/Contact';
 import Auth from './components/Auth';
 import './App.css';
 
+// Custom component to handle logout and redirect to home
+function LogoutHandler() {
+  const { logout } = useAuth();
+  
+  React.useEffect(() => {
+    // Ensure user is logged out
+    localStorage.removeItem('isLoggedIn');
+    logout();
+  }, [logout]);
+  
+  // Redirect to home page
+  return <Navigate to="/" replace />;
+}
+
 function AppRoutes() {
   const { isLoggedIn } = useAuth();
   return (
@@ -23,6 +37,8 @@ function AppRoutes() {
       <Route path="/customize" element={<CustomizeLink />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/auth" element={<Auth />} />
+      {/* Logout route that ensures user is logged out and redirects to home */}
+      <Route path="/logout" element={<LogoutHandler />} />
       {/* Catch-all route for GitHub Pages 404 redirect */}
       <Route path="*" element={<Auth />} />
     </Routes>

@@ -20,19 +20,39 @@ export default function Auth() {
   const requiresLocation = required.includes('loc');
   const requiresPassword = required.includes('pass');
 
-  // Show appropriate error message if we got here via a “reason” query
+  // Show appropriate error message if we got here via a "reason" query
   useEffect(() => {
-    if (!reason) return;
-    if (requiresPassword && !requiresLocation) {
-      setError('Incorrect password. Please try again.');
-    } else if (requiresLocation && !requiresPassword) {
-      setError('You are outside the permitted location area.');
-    } else {
-      setError('Either the password is incorrect or you are outside the permitted area.');
+    console.log('Reason parameter:', reason);
+    console.log('Required parameter:', required);
+    
+    if (!reason) {
+      console.log('No reason provided, returning early');
+      return;
     }
-  }, [reason, requiresPassword, requiresLocation]);
+    
+    // Split reason by commas and trim whitespace
+    const reasons = reason.split(',').map(r => r.trim());
+    console.log('Parsed reasons:', reasons);
+    
+    // Check for different combinations of reasons
+    if (reasons.includes('password') || reasons.includes('pass')) {
+      console.log('Password reason detected');
+      if (reasons.includes('location') || reasons.includes('loc')) {
+        console.log('Both password and location reasons detected');
+        setError('Incorrect password and you are outside the permitted location area.');
+      } else {
+        console.log('Only password reason detected');
+        setError('Incorrect password. Please try again.');
+      }
+    } else if (reasons.includes('location') || reasons.includes('loc')) {
+      console.log('Only location reason detected');
+      setError('You are outside the permitted location area.');
+    }
+    
+    console.log('Current error state:', error);
+  }, [reason, required]);
 
-  // Auto‑ask for location if that’s the only thing required
+  // Auto‑ask for location if that's the only thing required
   useEffect(() => {
     if (requiresLocation && !requiresPassword && !location) {
       handleLocationRequest().catch(() => {});
@@ -61,6 +81,7 @@ export default function Auth() {
         setLocation({ latitude, longitude, accuracy });
         setLoading(false);
         resolve();
+        console.log('raw coords:', { latitude, longitude, accuracy })
       };
 
       const fail = msg => {
@@ -97,6 +118,8 @@ export default function Auth() {
                   try {
                     const ipLoc = await getLocationByIP();
                     finish(ipLoc);
+                    console.log('IP location:', ipLoc);
+                    console.log(location);
                   } catch {
                     fail('Unable to determine location. Please check settings.');
                   }
@@ -114,10 +137,15 @@ export default function Auth() {
         try {
           const ipLoc = await getLocationByIP();
           finish(ipLoc);
+          console.log('IP location:', ipLoc);
+          console.log(location);
+          console.log(location);
         } catch {
           fail('Geolocation unsupported and IP lookup failed.');
         }
       }
+      console.log(location);
+      console.log(location);
     });
   };
 
@@ -141,9 +169,10 @@ export default function Auth() {
       params.set('lat', location.latitude.toString());
       params.set('lon', location.longitude.toString());
     }
-
+    console.log('params:', params.toString());
     window.location.href = `https://getmyuri.com/r/${aliasPath}${params.toString() ? '?' + params.toString() : ''}`;
   };
+
 
   if (!aliasPath) {
     return (
@@ -160,6 +189,7 @@ export default function Auth() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Authentication Required</h2>
+        {error && <div className="error-message" style={{ color: 'red', marginBottom: '15px' }}>{error}</div>}
         <form onSubmit={handleSubmit}>
           {requiresPassword && (
             <div className="form-group">
@@ -188,8 +218,6 @@ export default function Auth() {
           )}
 
           {location && <div className="location-info">Location granted ✓</div>}
-
-          {error && <div className="error-message">{error}</div>}
 
           <button
             type="submit"

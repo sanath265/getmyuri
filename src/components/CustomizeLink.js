@@ -46,7 +46,7 @@ async function getLocationWithRetry(retries = 3) {
       });
     } catch (err) {
       console.warn(`GPS attempt ${i+1} failed:`, err);
-      // on last GPS failure if “unknown”, try low‑accuracy
+      // on last GPS failure if "unknown", try low‑accuracy
       if (i === retries - 1 && err.code === err.POSITION_UNAVAILABLE) {
         try {
           return await new Promise((res, rej) => {
@@ -505,9 +505,7 @@ function CustomizeLink() {
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    logout();
-    navigate('/');
+    navigate('/logout');
   };
 
   const validateAlias = (value) => {
@@ -921,14 +919,14 @@ function CustomizeLink() {
               className={`mode-pill${mode === 'manual' ? ' selected' : ''}`}
               onClick={() => setMode('manual')}
             >
-              Manual
+              Custom
             </button>
             <button
               type="button"
               className={`mode-pill${mode === 'automatic' ? ' selected' : ''}`}
               onClick={() => setMode('automatic')}
             >
-              Automatic
+              Auto
             </button>
           </div>
 

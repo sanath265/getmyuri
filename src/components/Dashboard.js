@@ -37,9 +37,7 @@ function Dashboard() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    logout();
-    navigate('/');
+    navigate('/logout');
   };
 
   const handleCopy = (url) => {

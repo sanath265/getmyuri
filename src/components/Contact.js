@@ -17,9 +17,7 @@ function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    logout();
-    navigate('/');
+    navigate('/logout');
   };
 
   const validateName = (name) => {

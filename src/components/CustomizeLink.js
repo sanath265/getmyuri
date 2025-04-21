@@ -507,9 +507,30 @@ function CustomizeLink() {
     }
   };
 
+  // Add this function to get location by IP as a fallback
+  const getLocationByIP = async () => {
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      if (!response.ok) throw new Error('Failed to fetch IP location');
+      
+      const data = await response.json();
+      return {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        accuracy: 5000, // IP geolocation is typically accurate to city level (~5km)
+        source: 'ip'
+      };
+    } catch (error) {
+      console.error('IP location error:', error);
+      throw new Error('Unable to determine location by IP');
+    }
+  };
+
+  // Update the getLocationWithRetry function
   const getLocationWithRetry = async (retries = 3) => {
     if (!navigator.geolocation) {
-      throw new Error('Geolocation is not supported by your browser');
+      // If geolocation is not supported, try IP-based location
+      return getLocationByIP();
     }
 
     for (let attempt = 0; attempt < retries; attempt++) {
@@ -526,30 +547,41 @@ function CustomizeLink() {
               resolve({
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
-                accuracy: position.coords.accuracy
+                accuracy: position.coords.accuracy,
+                source: 'gps'
               });
             },
             (error) => {
-              // Handle kCLErrorLocationUnknown specifically
-              if (error.code === 2 && error.message.includes('kCLErrorLocationUnknown')) {
-                // Try with lower accuracy on next attempt
-                if (attempt < retries - 1) {
-                  options.enableHighAccuracy = false;
-                  options.timeout = 15000; // Increase timeout
-                  navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                      resolve({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                      });
-                    },
-                    (retryError) => reject(retryError),
-                    options
-                  );
-                  return;
-                }
+              console.error(`Location attempt ${attempt + 1} failed:`, error);
+              
+              // If this is the last attempt, try IP-based location
+              if (attempt === retries - 1) {
+                getLocationByIP()
+                  .then(resolve)
+                  .catch(reject);
+                return;
               }
+              
+              // For kCLErrorLocationUnknown, try with lower accuracy
+              if (error.code === 2) {
+                options.enableHighAccuracy = false;
+                options.timeout = 15000;
+                
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    resolve({
+                      latitude: position.coords.latitude,
+                      longitude: position.coords.longitude,
+                      accuracy: position.coords.accuracy,
+                      source: 'gps-low'
+                    });
+                  },
+                  (retryError) => reject(retryError),
+                  options
+                );
+                return;
+              }
+              
               reject(error);
             },
             options
@@ -571,11 +603,22 @@ function CustomizeLink() {
     
     try {
       const locationData = await getLocationWithRetry();
-      setLocation(locationData);
-      setLocationSource('gps');
+      setLocation({
+        position: [locationData.latitude, locationData.longitude],
+        radius: location.radius,
+        unit: location.unit
+      });
+      setLocationSource(locationData.source);
+      
+      // Show success message based on source
+      if (locationData.source === 'ip') {
+        toast.info('Using approximate location based on IP address');
+      } else if (locationData.source === 'gps-low') {
+        toast.info('Using lower accuracy GPS location');
+      }
     } catch (error) {
       console.error('Location error:', error);
-      setLocationError('Unable to get your location. Please try again.');
+      setLocationError('Unable to get your location. Please try again or enter location manually.');
     } finally {
       setIsLocationLoading(false);
     }

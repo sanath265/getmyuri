@@ -44,9 +44,46 @@ export default function Auth() {
     }
   }, [reason, requiresPassword, requiresLocation]);
 
+  // Add this function to get location by IP as a fallback
+  const getLocationByIP = async () => {
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      if (!response.ok) throw new Error('Failed to fetch IP location');
+      
+      const data = await response.json();
+      return {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        accuracy: 5000 // IP geolocation is typically accurate to city level (~5km)
+      };
+    } catch (error) {
+      console.error('IP location error:', error);
+      throw new Error('Unable to determine location by IP');
+    }
+  };
+
+  // Update the handleLocationRequest function
   const handleLocationRequest = () => {
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
+      // If geolocation is not supported, try IP-based location
+      setLoading(true);
+      getLocationByIP()
+        .then(data => {
+          setLoading(false);
+          setCoords({
+            lat: data.latitude,
+            lon: data.longitude
+          });
+          setLocation({
+            latitude: data.latitude,
+            longitude: data.longitude,
+            accuracy: data.accuracy
+          });
+        })
+        .catch(error => {
+          setLoading(false);
+          setError('Unable to determine your location. Please check your device settings and try again.');
+        });
       return;
     }
 
@@ -78,10 +115,10 @@ export default function Auth() {
         });
       },
       (error) => {
-        setLoading(false);
+        console.error('Location error:', error);
         
         // Handle kCLErrorLocationUnknown specifically
-        if (error.code === 2 && error.message.includes('kCLErrorLocationUnknown')) {
+        if (error.code === 2) {
           // Try again with lower accuracy
           const lowAccuracyOptions = {
             enableHighAccuracy: false,
@@ -108,14 +145,33 @@ export default function Auth() {
               });
             },
             (retryError) => {
-              setLoading(false);
-              setError('Unable to determine your location. Please check your device settings and try again.');
+              console.error('Low accuracy location error:', retryError);
+              
+              // If low accuracy also fails, try IP-based location
+              getLocationByIP()
+                .then(data => {
+                  setLoading(false);
+                  setCoords({
+                    lat: data.latitude,
+                    lon: data.longitude
+                  });
+                  setLocation({
+                    latitude: data.latitude,
+                    longitude: data.longitude,
+                    accuracy: data.accuracy
+                  });
+                })
+                .catch(ipError => {
+                  setLoading(false);
+                  setError('Unable to determine your location. Please check your device settings and try again.');
+                });
             },
             lowAccuracyOptions
           );
           return;
         }
         
+        setLoading(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
             setError('Location access was denied. Please enable location services to continue.');

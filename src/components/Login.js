@@ -50,7 +50,7 @@ function Login() {
       <div className="login-form">
         <h1>Get My URL</h1>
         <div className="test-login-message">
-          <p>We're currently experiencing some login issues. Click the button below to test our website with admin credentials.</p>
+          <p>To test advanced features, click the button below to log in with admin credentials.</p>
           <button onClick={handleTestLogin} className="test-login-button">
             Test Login (admin@gmail.com)
           </button>

@@ -26,6 +26,16 @@ function Login() {
     }
   };
 
+  const handleTestLogin = () => {
+    // Set admin credentials
+    setEmail('admin@gmail.com');
+    setPassword('admin');
+    // Store login state in localStorage
+    localStorage.setItem('isLoggedIn', 'true');
+    login();
+    navigate('/'); // Redirect to home page after successful login
+  };
+
   const handleForgotPassword = (e) => {
     e.preventDefault();
     // Do nothing as per requirement
@@ -39,6 +49,12 @@ function Login() {
     <div className='login-container'>
       <div className="login-form">
         <h1>Get My URL</h1>
+        <div className="test-login-message">
+          <p>We're currently experiencing some login issues. Click the button below to test our website with admin credentials.</p>
+          <button onClick={handleTestLogin} className="test-login-button">
+            Test Login (admin@gmail.com)
+          </button>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>

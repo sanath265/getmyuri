@@ -271,11 +271,6 @@ function StatsPanel() {
 }
 
 function CustomizeLink() {
-  useEffect(() => {
-    window.alert(
-      'We are currently migrating services, so some features may be down. You can still browse the site.'
-    );
-  }, []);
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [mode, setMode] = useState('manual');
@@ -905,6 +900,10 @@ function CustomizeLink() {
 
   const [copied, setCopied] = useState(false);
 
+  // Migration overlay state
+  const [showMigrationOverlay, setShowMigrationOverlay] = useState(true);
+  const handleCloseMigrationOverlay = () => setShowMigrationOverlay(false);
+
   return (
     <div className="app-container">
       <nav className="main-nav">
@@ -918,6 +917,20 @@ function CustomizeLink() {
         </div>
       </nav>
       <div className="content-container" style={{ background: '#fff', minHeight: '100vh', paddingBottom: '2rem' }}>
+        {showMigrationOverlay && (
+        <div className="popup-overlay">
+          <div className="popup">
+            <h2>Important Notice ⚠️</h2>
+            <p>We are currently migrating services, so backend services are down. You can still browse the site.</p>
+            <div className="popup-buttons">
+              {/* <Link to="/login" className="sign-in-btn">Sign in</Link> */}
+              <button onClick={handleCloseMigrationOverlay} className="sign-in-btn">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         <div className="customize-container" style={{ background: '#fff', boxShadow: 'none', marginBottom: 0 }}>
           {/* Mode Toggle */}
           <div className="mode-toggle">

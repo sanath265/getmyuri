@@ -23,7 +23,7 @@ function Home() {
   const [shortUrl, setShortUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  // Migration popup state removed; now using alert.
+  const [showMigrationOverlay, setShowMigrationOverlay] = useState(true);
   const navigate = useNavigate();
 
   const slides = [
@@ -58,11 +58,9 @@ function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    window.alert(
-      'We are currently migrating services, so some features may be down. You can still browse the site.'
-    );
-  }, []);
+  const handleCloseMigrationOverlay = () => {
+    setShowMigrationOverlay(false);
+  };
 
   const handleSlideClick = (index) => {
     setCurrentSlide(index);
@@ -221,6 +219,20 @@ function Home() {
 
   return (
     <>
+      {showMigrationOverlay && (
+        <div className="popup-overlay">
+          <div className="popup">
+            <h2>Important Notice ⚠️</h2>
+            <p>We are currently migrating services, so backend services are down. You can still browse the site.</p>
+            <div className="popup-buttons">
+              {/* <Link to="/login" className="sign-in-btn">Sign in</Link> */}
+              <button onClick={handleCloseMigrationOverlay} className="sign-in-btn">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="home-container">
       <nav className="navbar">
         <img src={logo} alt="GetMyUri" className="nav-logo" onClick={() => navigate('/')} />
@@ -383,4 +395,4 @@ function Home() {
   );
 }
 
-export default Home; 
+export default Home;

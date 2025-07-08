@@ -271,6 +271,11 @@ function StatsPanel() {
 }
 
 function CustomizeLink() {
+  useEffect(() => {
+    window.alert(
+      'We are currently migrating services, so some features may be down. You can still browse the site.'
+    );
+  }, []);
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [mode, setMode] = useState('manual');

@@ -23,6 +23,7 @@ function Home() {
   const [shortUrl, setShortUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Migration popup state removed; now using alert.
   const navigate = useNavigate();
 
   const slides = [
@@ -55,6 +56,12 @@ function Home() {
     }, 50);
 
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    window.alert(
+      'We are currently migrating services, so some features may be down. You can still browse the site.'
+    );
   }, []);
 
   const handleSlideClick = (index) => {
@@ -213,7 +220,8 @@ function Home() {
   };
 
   return (
-    <div className="home-container">
+    <>
+      <div className="home-container">
       <nav className="navbar">
         <img src={logo} alt="GetMyUri" className="nav-logo" onClick={() => navigate('/')} />
         {isLoggedIn ? (
@@ -370,7 +378,8 @@ function Home() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
